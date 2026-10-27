@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#0d1117">
+  <meta name="description" content="KlyPen — local-first web security assessment">
+  <title>KlyPen · Web Security Assessment</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <a class="brand" href="#dashboard" aria-label="KlyPen dashboard"><span class="brand-mark">K<span>·</span></span><span class="brand-copy"><b>KlyPen</b><small>WEB SECURITY</small></span></a>
+    <div class="side-label">WORKSPACE</div>
+    <nav class="main-nav" aria-label="Main navigation">
+      <button class="nav-link active" data-page="dashboard"><span class="nav-icon">◫</span> Overview</button>
+      <button class="nav-link" data-page="scans"><span class="nav-icon">⌁</span> Scans <span class="nav-count" id="navScanCount">0</span></button>
+      <button class="nav-link" data-page="findings"><span class="nav-icon">⌕</span> Findings</button>
+    </nav>
+    <div class="side-label space-top">INTELLIGENCE</div>
+    <nav class="main-nav" aria-label="Intelligence navigation">
+      <button class="nav-link" data-page="sources"><span class="nav-icon">◎</span> Data sources</button>
+      <button class="nav-link" data-page="intelligence"><span class="nav-icon">⌘</span> Package lookup <span class="beta-pill">OSV</span></button>
+    </nav>
+    <div class="sidebar-bottom">
+      <div class="local-note"><span class="online-dot"></span><div><b>Running locally</b><small>Your scans stay on this machine</small></div></div>
+      <button class="nav-link" data-page="settings"><span class="nav-icon">⚙</span> Settings</button>
+      <div class="side-footer"><span class="version-dot"></span> KlyPen <span class="mono">v1.0.0</span></div>
+    </div>
+  </aside>
+
+  <main class="main-area">
+    <header class="topbar">
+      <div class="breadcrumbs"><span>Workspace</span><span class="crumb-slash">/</span><strong id="crumbCurrent">Overview</strong></div>
+      <div class="top-actions"><span class="local-badge"><span class="online-dot"></span> LOCAL INSTANCE</span><button class="icon-button" id="refreshButton" title="Refresh data" aria-label="Refresh data">↻</button><div class="avatar">K</div></div>
+    </header>
+    <section class="page-content" id="pageContent" aria-live="polite">
+      <div class="loading-state"><span class="spinner"></span> Loading KlyPen…</div>
+    </section>
+    <footer class="page-footer"><span>KlyPen <span class="footer-sep">·</span> Authorized assessments only</span><span>Local-first by design</span></footer>
+  </main>
+</div>
+<div id="toastRegion" class="toast-region" aria-live="polite" aria-atomic="true"></div>
+<script src="/static/app.js" defer></script>
+</body>
+</html>

@@ -1,19 +1,30 @@
-# KlyPen build status
+# KlyPen implementation status
 
-## Implemented and tested (stdlib + bs4 only; `cd backend && python -m unittest discover -s tests -t .`)
-- `scanner/scope.py`: strict URL normalisation, IPv4/IPv6/mapped/6to4 blocking, metadata blocking,
-  numeric-hostname rejection, per-address DNS validation, origin scope enforcement.
-- `scanner/http_client.py`: connects only to validated pinned IPs (TLS/SNI use the real hostname),
-  manual redirects with per-hop scope check + re-resolution, size/time/request/rate limits, GET/HEAD/OPTIONS only.
-- `scanner/findings.py`: finding schema with automatic secret redaction.
-- `checks/headers.py`, `checks/cookies.py`: proportionate severity; cookie values never stored.
-- 21 tests incl. rebinding, redirect-to-metadata, size limit, timeout, budget, redaction.
+## Implemented in this package
 
-## NOT implemented (do not treat as done)
-Crawler, remaining checks (TLS cert, CORS, forms/HTML, mixed content, source maps, public-config allowlist),
-active-check module, scan engine/scoring, SQLAlchemy models + Alembic, FastAPI API + SSE + cancellation + auth,
-reports, React frontend, lab fixture app, Docker, GitHub Actions, README/SECURITY/CONTRIBUTING/LICENSE.
+- Local-only FastAPI application and dashboard served from the same origin.
+- SQLite scan/finding persistence.
+- URL normalization, origin constraints, loopback/private/reserved IP rejection, supported-port allowlist, and explicit local demo-lab exception disabled by default.
+- Pinned-IP HTTP requests with normal TLS verification, manual same-origin redirect handling, response-size limits, and bounded request/time/page limits.
+- Passive response-header, cookie, CORS-indicator, mixed-content, password-form transport, and visible source-map-reference checks.
+- Scan status, cancellation, SSE progress, findings browsing, score summary, and JSON/HTML report exports.
+- Optional OSV.dev package/version lookup with response limits and in-memory caching.
+- Optional AlienVault OTX domain enrichment, disabled unless explicitly configured.
+- Local demo lab, unit/API tests, PowerShell and shell launchers, CI workflow, and documentation.
 
-## Not verified here
-The sandbox has no network, so FastAPI/httpx/SQLAlchemy/pytest/ruff were never installed or run, and TLS
-verification against a real HTTPS host was not exercised.
+## Not implemented / limitations
+
+- No active exploit tests, authentication testing, form submissions, or state-changing checks.
+- No deep JavaScript analysis or source-map fetching.
+- No external web crawling or third-party origins.
+- OTX endpoints and credentials are optional; availability depends on the provider and account configuration.
+- Tests are local-only and do not certify behavior across all target servers.
+
+## Verification status (executed during packaging)
+
+- `python -m unittest discover -s backend/tests -t .`: **31 tests passed**.
+- `node --check backend/static/app.js`: passed.
+- `python -m compileall -q backend`: passed.
+- Local integration smoke test against the included loopback lab: completed a real scan across two local pages, generated findings, and returned JSON and HTML report responses.
+
+These checks were executed in the packaging environment. They do not replace testing on the user's machine or prove coverage across all production servers.
