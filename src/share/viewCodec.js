@@ -30,7 +30,7 @@ import {
   normalizeAllocationStrategy,
 } from '../data/detectionPolicy.js';
 import { clampScopeFeatherPct } from '../scopeMaskPolicy.js';
-import { VIEW_STYLES } from '../view/index.js';
+import { VIEW_STYLES } from './styles.js';
 import {
   GLOBAL_POST_DEFAULTS,
   STYLE_PRESET_DEFAULTS,

@@ -479,8 +479,6 @@ export const SHARE_TRACKING_RESTORE_POLICIES = Object.freeze({
 export const LEGACY_LAYER_STATE_TOKENS = Object.freeze({
   'ais-live-vessels': 'a',
   'alpr-cameras': 'p',
-  'bhote-koshi-2026': 'h',
-  'bhote-koshi-locator': 'z',
   bikeshare: 'b',
   cctv: 'c',
   directions: 'n',
@@ -578,16 +576,6 @@ export const LAYER_STATE_REGISTRY = Object.freeze([
   Object.freeze({
     id: 'alpr-cameras',
     token: 'p',
-    disposition: 'enabled-only',
-  }),
-  Object.freeze({
-    id: 'bhote-koshi-2026',
-    token: 'h',
-    disposition: 'enabled-only',
-  }),
-  Object.freeze({
-    id: 'bhote-koshi-locator',
-    token: 'z',
     disposition: 'enabled-only',
   }),
   Object.freeze({ id: 'bikeshare', token: 'b', disposition: 'enabled-only' }),

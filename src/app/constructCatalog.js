@@ -20,7 +20,6 @@ import { createApplicationInstallations } from './layers/militaryInstallations.j
 import { createApplicationSatellites } from './layers/satellites.js';
 import { createApplicationLaunches } from './layers/rocketLaunches.js';
 import { createApplicationAlpr } from './layers/alprCameras.js';
-import { createApplicationLocalAdsb } from './layers/localAdsb.js';
 import { createApplicationAwareness } from './layers/militaryAwareness.js';
 import { createApplicationFirms } from './layers/firms.js';
 import { createApplicationEarthquakes } from './layers/earthquakes.js';
@@ -32,27 +31,11 @@ import { createApplicationCables } from './layers/submarineCables.js';
 import { createApplicationStreetLevel } from './layers/streetLevel.js';
 import { createInfrastructureLayers } from '../data/infrastructure.js';
 import { localGeoJsonServices } from './localGeojsonServices.js';
-import { createBhoteKoshiEventLayer } from '../data/bhoteKoshiEvent.js';
-import { createBhoteKoshiLocatorLayer } from '../data/bhoteKoshiLocator.js';
-
-/**
- * Hardware-local layers are registered like any other but never enter share
- * links or stored layer state: another browser cannot have this receiver.
- */
-export const LOCAL_ONLY_LAYER_METADATA = Object.freeze([
-  Object.freeze({ id: 'local-adsb', disposition: 'local-only' }),
-]);
 
 /** Serialization metadata for every layer the application catalog constructs. */
-export const APPLICATION_LAYER_METADATA = Object.freeze([
-  ...LAYER_STATE_REGISTRY,
-  ...LOCAL_ONLY_LAYER_METADATA,
-]);
+export const APPLICATION_LAYER_METADATA = Object.freeze([...LAYER_STATE_REGISTRY]);
 
-/** Construct the current catalog without choosing any source provider.
- * Scene engines remain page-owned; layers and classification have this app's lifetime.
- * The manager owns layer destruction, while abort releases classification even if startup fails.
- */
+/** Construct the current catalog without choosing any source provider. */
 export function createApplicationCatalog({
   surface,
   sources,
@@ -60,7 +43,6 @@ export function createApplicationCatalog({
   metadata = APPLICATION_LAYER_METADATA,
   vesselOptions,
   resolveAsset,
-  nepalBoundaryResolver,
   streetLevelProviders,
 }) {
   if (!signal?.addEventListener)
@@ -107,18 +89,8 @@ export function createApplicationCatalog({
     });
     const catalog = createLayerCatalog(
       [
-        createBhoteKoshiEventLayer(),
-        createBhoteKoshiLocatorLayer({
-          boundaryResolver: nepalBoundaryResolver,
-        }),
         flights,
         military,
-        createApplicationLocalAdsb({
-          surface,
-          enrichment: sources.flights,
-          displayParams: () => flights.getParams(),
-          ...(resolveAsset ? { resolveAsset } : {}),
-        }),
         createApplicationEarthquakes({ source: sources.earthquakes }),
         createApplicationAirQuality({ source: sources['air-quality'] }),
         createApplicationFirePerimeters({

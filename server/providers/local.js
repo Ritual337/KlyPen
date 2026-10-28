@@ -13,13 +13,10 @@ import { cctvProxy } from './cctv.js';
 import { defaultSourceRoot } from './common/source-root.js';
 import { radioBrowserProxy } from './radio.js';
 import { gbfsProxy } from './gbfs.js';
-import { localReceiversProxy } from './local-receivers.js';
 import { transitProxy } from './transit.js';
 import { adsbLolProxy } from './aircraft/adsb-lol.js';
 import { aisLiveProxy } from './vessels/ais-live.js';
 import { trackBackfillProxies } from './aircraft/tracks.js';
-import { openAiRealtimeProxy } from './openai.js';
-import { geminiLiveProxy } from './gemini.js';
 import { googlePlacesContextProxy } from './places.js';
 import { mapillaryProxy } from './mapillary.js';
 import { keySetupEndpoint } from '../standalone/key-setup.js';
@@ -30,11 +27,8 @@ import { ghostMapsProxy } from './ghostMaps.js';
 import { cycloneProxy } from './cyclones.js';
 import { windProxy } from './wind.js';
 
-/**
- * Construct the local provider plugins in their established order.
- * `realtime` configures OpenAI; `gemini` explicitly opts into Gemini Live.
- */
-function localProviderPlugins({ realtime, gemini } = {}) {
+/** Construct the local provider plugins in their established order. */
+function localProviderPlugins() {
   return [
     openSkyProxy(),
     celestrakProxy(),
@@ -51,13 +45,10 @@ function localProviderPlugins({ realtime, gemini } = {}) {
     cctvProxy({ sourceRoot: defaultSourceRoot }),
     radioBrowserProxy(),
     gbfsProxy(),
-    localReceiversProxy(),
     transitProxy(),
     adsbLolProxy(),
     aisLiveProxy(),
     trackBackfillProxies(),
-    openAiRealtimeProxy({ realtime }),
-    ...(gemini ? [geminiLiveProxy({ realtime: gemini })] : []),
     googlePlacesContextProxy(),
     windProxy(),
     weatherProxy(),
@@ -101,7 +92,6 @@ export { readOverpassDisk } from './overpass/cache.js';
 export { resolveOverpassPreflight } from './overpass/cache.js';
 export { overpassPayloadIsData } from './overpass/transport.js';
 export { fetchOverpassPayload } from './overpass/transport.js';
-export { openAiRealtimeProxy } from './openai.js';
 export { MILITARY_INSTALLATION_ELEMENT_CAP } from './military-installations/constants.js';
 export { quantizeMilitaryInstallationBox } from './military-installations/query.js';
 export { militaryInstallationCacheKey } from './military-installations/query.js';

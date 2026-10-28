@@ -10,7 +10,7 @@ import {
   decodeLayerStateParams,
   encodeLayerStateParams,
 } from './data/layerState.js';
-import { STYLE_URL_NAMES } from './view/index.js';
+import { STYLE_URL_NAMES } from './share/styles.js';
 import {
   SHARE_VIEW_PANELS,
   SHARE_VIEW_STYLE_PARAMS,
