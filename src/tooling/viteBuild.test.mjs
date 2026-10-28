@@ -241,8 +241,6 @@ test('only embed-mode documents may be framed, and only by the allowed ancestors
 });
 
 test('the CSP admits the event media embeds and the Maps JavaScript API, and no other script origin', async () => {
-  const { embeddedMediaFrameUrl, resolveEmbeddedMediaSource } =
-    await import('../../src/data/bhoteKoshiEmbeddedMedia.js');
   const directive = (name) =>
     BROWSER_CSP.split(';')
       .map((part) => part.trim())

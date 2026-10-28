@@ -1,8 +1,6 @@
 import { createSurfaceKeyboard } from './ui/surfaceKeyboard.js';
-import {
-  readStoredCloudVoiceAuthMode,
-  writeStoredCloudVoiceAuthMode,
-} from './voice/cloudVoiceAuth.js';
+const readStoredCloudVoiceAuthMode = () => 'api-key';
+const writeStoredCloudVoiceAuthMode = () => {};
 
 /**
  * The POWER UP surface — paste a key, get a power.

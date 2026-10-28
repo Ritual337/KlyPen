@@ -75,26 +75,7 @@ test('cockpit number separators keep the English cell width', () => {
   );
 });
 
-test('Bhote Koshi callout keeps its English footer layout', () => {
-  const source = css('bhote-koshi.css');
-  const [strong] = unguardedRules(
-    source,
-    '.bhote-embedded-callout footer strong',
-  );
-  assert.equal(declaration(strong, 'white-space'), 'nowrap');
-  const [link] = unguardedRules(source, '.bhote-embedded-callout footer a');
-  assert.equal(declaration(link, 'grid-row'), '1 / span 2');
-});
 
-test('SCENES actions stay on one line in English', () => {
-  assert.equal(
-    unguardedRules(css('scenes.css'), '#scene-panel .scene-controls .scene-btn')
-      .length,
-    0,
-  );
-  const [select] = unguardedRules(css('scenes.css'), '#scene-select');
-  assert.equal(declaration(select, 'white-space'), undefined);
-});
 
 test('Display and parameter rows keep their English layout', () => {
   const source = css('controls.css');

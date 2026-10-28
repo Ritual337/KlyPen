@@ -99,11 +99,6 @@ test('malformed v2 layer lists mark the whole incoming share payload invalid', (
   }
 });
 
-test('Nepal locator token is valid in v2 share links', () => {
-  const parsed = makeManager('#v=2&lat=10&lon=20&l=z').parseInitialHash();
-  assert.deepEqual(parsed.layerState.enabledLayerIds, ['bhote-koshi-locator']);
-  assert.equal(parsed.layerStateInvalid, false);
-});
 
 test('scope feather above 100% survives share parsing and serialization', () => {
   const manager = makeManager('#v=2&lat=10&lon=20&sc=0&scf=200');

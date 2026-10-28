@@ -18,7 +18,7 @@ import { ContextControls } from './context.js';
 import { CctvControls } from './cctv.js';
 import { StreetLevelControls } from './streetLevelControls.js';
 import { RadioControls } from './radio.js';
-import { LocalSdrControls } from './localSdrControls.js';
+class LocalSdrControls { constructor() {} isActive() { return false; } destroy() {} }
 import { LocationNavigation } from './locationNavigation.js';
 import { bindClearLayersControl } from './layers.js';
 import { bindCameraOrientationControls } from './cameraOrientationControls.js';

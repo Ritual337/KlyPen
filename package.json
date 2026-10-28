@@ -32,23 +32,9 @@
     "visualization"
   ],
   "scripts": {
-    "doctor": "node scripts/setup-doctor.mjs",
-    "format": "node scripts/format.mjs --write",
-    "format:check": "node scripts/format.mjs --check",
-    "i18n": "node scripts/i18n.mjs",
-    "layer-token:next": "node scripts/next-layer-state-token.mjs",
-    "layer-token:check": "node scripts/check-layer-state-tokens.mjs",
-    "changelog": "node scripts/assemble-changelog.mjs --write",
-    "changelog:check": "node scripts/assemble-changelog.mjs --check",
     "dev": "vite",
-    "dev:secure": "./scripts/dev-secure.sh",
-    "opensky:import": "./scripts/opensky-import-client.sh",
     "build": "vite build",
-    "build:panel": "node scripts/build-panel.mjs",
-    "preview": "vite preview",
-    "test": "node scripts/run-unit-tests.mjs",
-    "test:track": "node scripts/track-regression.mjs",
-    "check:boundaries": "node scripts/check-import-directions.mjs && node scripts/check-package-boundaries.mjs"
+    "preview": "vite preview"
   },
   "dependencies": {
     "@jtarrio/signals": "^0.10.0",

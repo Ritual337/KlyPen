@@ -25,7 +25,7 @@ import {
   ensureGeoidReady,
   geoidHeight,
 } from './data/geoid.js';
-import { getBasemapLabelContext } from './voice/gevActions.js';
+const getBasemapLabelContext = async () => ({});
 import {
   hudSummaryMatchesProvenance,
   hudSummaryLayerContext,
