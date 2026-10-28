@@ -4,13 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Eye - live globe</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;700&family=Press+Start+2P&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;700&display=swap">
 <script src="https://cdn.jsdelivr.net/npm/lucide@0.469.0/dist/umd/lucide.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/satellite.js@4.1.4/dist/satellite.min.js"></script>
 <script>/* on localhost Cesium is served same-origin by server.js (workers need that); otherwise from the CDN */
 (function(){var l=/^https?:$/.test(location.protocol)&&['localhost','127.0.0.1'].indexOf(location.hostname)>-1,b=l?'/cesium/':'https://cdn.jsdelivr.net/npm/cesium@1.120.0/Build/Cesium/';window.CESIUM_BASE_URL=b;document.write('<link rel="stylesheet" href="'+b+'Widgets/widgets.css"><script src="'+b+'Cesium.js"><\/script>')})();</script>
 <style>
-/* ===== Ritual design tokens (unchanged) ===== */
 :root{--bg:#020204;--panel:#07060b;--panel2:#0e0c15;--line:#1f1b2e;--fg:#e8e5f0;--dim:#7f7a92;--acc:#ff8a5c;--acc2:#ff5d8f;--acc3:#ffd166;--hot:#ff6b6b;--on:#06040d;color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 :root[data-theme="moss"]{--acc:#7fdc9c;--acc2:#e6d96a;--acc3:#4fd8c4}
 :root[data-theme="violet"]{--acc:#9577f5;--acc2:#45c4b3;--acc3:#d066a0}
@@ -50,10 +49,7 @@ input.f:focus{outline:2px solid var(--acc)}
 .wbar{display:flex;align-items:center;gap:10px;padding:9px 18px;border-bottom:1px solid var(--line);color:var(--dim);flex-wrap:wrap}
 .wbar b{color:var(--acc);font-weight:700}
 .stage{position:relative;flex:1;min-height:320px}
-#globe{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:grab}
-#globe.nvg{filter:grayscale(1) sepia(1) hue-rotate(60deg) saturate(4) brightness(1.15)}
-#globe.flir{filter:grayscale(1) contrast(1.4) brightness(1.1)}
-#globe.mono{filter:grayscale(1) contrast(1.15)}
+#cesium{position:absolute;inset:0}
 .hud{position:absolute;pointer-events:none;font-size:11px;color:var(--dim);line-height:1.5}
 .hud b{color:var(--acc)}
 .hud.tl{top:12px;left:16px}.hud.tr{top:12px;right:16px;text-align:right}.hud.bl{bottom:12px;left:16px}.hud.br{bottom:12px;right:16px;text-align:right}
@@ -66,8 +62,6 @@ input.f:focus{outline:2px solid var(--acc)}
 .side h4 .tag{margin-left:auto;font-weight:400}
 .kv{display:flex;justify-content:space-between;gap:10px;padding:2px 0}.kv span:first-child{color:var(--dim)}
 .ent{font:italic 400 28px/1.1 'Instrument Serif',serif;margin-bottom:6px;word-break:break-word}
-.bar{height:6px;margin:3px 0 9px;background:repeating-linear-gradient(90deg,var(--panel2) 0 5px,transparent 5px 7px)}
-.bar i{display:block;height:100%;width:0;transition:width .6s cubic-bezier(.2,.8,.2,1);background:repeating-linear-gradient(90deg,var(--acc) 0 5px,transparent 5px 7px)}
 .row{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px dashed var(--line)}
 .row .grow{flex:1;min-width:0}.row svg{width:16px;height:16px;color:var(--c,var(--acc));flex:none}
 .row.clk{cursor:pointer}.row.clk:hover{background:var(--panel2)}
@@ -97,28 +91,68 @@ input.f:focus{outline:2px solid var(--acc)}
   #app .p{border-radius:0;border-left:0;border-right:0}
   .top h1{font-size:28px}
 }
-#cesium{position:absolute;inset:0}
+:root{--line:#282332;--panel:#08070b;--panel2:#100e15}
+body{padding:14px;line-height:1.55}
+#app{grid-template-columns:86px minmax(0,1fr) minmax(320px,370px);gap:12px}
+.p{border-radius:18px 5px 18px 5px}
+.box{padding:17px}
+.top{padding:12px 20px;gap:16px}
+.top h1{font-size:36px;letter-spacing:-.02em}
+.top h1 small{font-size:12px;letter-spacing:0}
+.rail{padding:12px 9px;gap:8px}
+.rail .btn{padding:9px 4px;border-radius:11px 3px 11px 3px}
+.win{border-radius:20px 5px 20px 5px}
+.wbar{padding:12px 18px;min-height:48px}
+.stage{min-height:380px}
+.side{gap:12px;padding-right:2px}
+.side h4{font-size:12px;letter-spacing:.045em;text-transform:uppercase;margin-bottom:13px}
+.side h4 .tag{letter-spacing:0;text-transform:none}
+.btn{border-radius:10px 3px 10px 3px;padding:9px 12px;min-height:36px}
+.sp .btn{min-height:34px}
+input.f{border-radius:10px 3px 10px 3px;padding:10px 12px;min-height:38px}
+.q{gap:8px;align-items:stretch}
+.seg{display:flex;gap:6px;flex-wrap:wrap}.seg .btn{padding:5px 9px;font-size:11px}
+.row{padding:9px 2px;gap:12px}
+.term{min-height:100px;max-height:180px}
+#inspector .ent{font-size:32px}
+#bases .btn,#sens .btn{flex:1 1 auto;justify-content:center}
+.side .box>details{border-top:1px solid var(--line);padding-top:12px;margin-top:12px!important}
+.side details summary{padding:3px 0;font-size:11px;letter-spacing:.025em}
+.side details[open] summary{color:var(--acc);margin-bottom:10px}
+.side .box input.f{width:100%;min-width:0}
+.side .box .q input.f{flex:1}
+.foot{padding:9px 18px}
+@media(min-width:961px) and (max-width:1180px){#app{grid-template-columns:76px minmax(0,1fr) 310px}}
+@media(max-width:960px){body{padding:8px}#app{grid-template-columns:minmax(0,1fr);gap:10px}.side{gap:10px}.stage{min-height:62vh}}
+@media(max-width:720px){body{padding:0 0 10px}.top{padding:12px 14px}.top h1{font-size:30px}.box{padding:15px}}
+#tracking-box .track-controls{display:grid;grid-template-columns:minmax(0,1fr) 108px;gap:6px;margin:8px 0 0}
+#tracking-box input.f,#tracking-box select.f{width:100%;min-width:0;font:inherit;font-size:11px;color:var(--fg);background:var(--panel2);border:1px solid var(--line);border-radius:9px 2px 9px 2px;padding:7px 8px}
+#tracking-box input.f:focus,#tracking-box select.f:focus{outline:1px solid var(--acc);border-color:var(--acc)}
+#roster .row{padding:7px 3px;border-bottom:1px solid color-mix(in srgb,var(--line) 65%,transparent);gap:7px}
+#roster .row:last-child{border-bottom:0}
+#roster .track-name{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:175px}
+#roster .track-type{display:block;font-size:9px;color:var(--dim);line-height:1.4}
+@media(max-width:900px){#tracking-box .track-controls{grid-template-columns:minmax(0,1fr) 96px}}
+#det{contain:layout paint;will-change:contents;position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 #cesium .cesium-viewer-toolbar,#cesium .cesium-widget-credits .cesium-credit-logoContainer{display:none}
 #cesium .cesium-widget-credits{font-size:9px!important;opacity:.55}
-#det{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 #cesium.s-crt canvas{filter:contrast(1.15) saturate(1.25) brightness(.95)}
 #cesium.s-nvg canvas{filter:grayscale(1) sepia(1) hue-rotate(55deg) saturate(5) brightness(1.2)}
 #cesium.s-flir canvas{filter:grayscale(1) contrast(1.5) brightness(1.1) sepia(1) hue-rotate(-30deg) saturate(3)}
 #cesium.s-noir canvas{filter:grayscale(1) contrast(1.3)}
 #cesium.s-snow canvas{filter:grayscale(.85) brightness(1.5) contrast(.9)}
-.seg{display:flex;gap:6px;flex-wrap:wrap}.seg .btn{padding:5px 9px;font-size:11px}
 </style>
 </head>
-<body class="crt">
+<body>
 <div id="boot"></div>
 <div id="app">
  <header class="p top">
   <i data-lucide="eye" style="width:30px;height:30px;color:var(--acc)"></i>
-  <h1>Eye<small id="sub">live public signals, one globe</small></h1>
+  <h1>Eye<small id="sub">live signals · ritual globe</small></h1>
   <div class="sp">
    <span id="clock"></span>
    <button class="btn" data-act="theme" title="Change colour" aria-label="Colour"><i data-lucide="palette"></i></button>
-   <button class="btn on" data-act="crt" title="Scanlines" aria-label="Scanlines"><i data-lucide="tv"></i></button>
+   <button class="btn" data-act="crt" title="Scanlines" aria-label="Scanlines"><i data-lucide="tv"></i></button>
    <button class="btn" data-act="voice" title="Voice control" aria-label="Voice"><i data-lucide="mic"></i></button>
   </div>
  </header>
@@ -134,6 +168,12 @@ input.f:focus{outline:2px solid var(--acc)}
  </main>
  <aside class="side">
   <div class="p box" id="inspector"></div>
+  <div class="p box" id="aibox"><h4><i data-lucide="brain-circuit"></i>AI analyst<span class="tag" id="aitag">local + LLM</span></h4>
+   <div id="aiout" class="dim">Select anything on the globe for a plain-English briefing: what it is, what it's doing, what's around it.</div>
+   <div class="q" style="margin-top:8px"><input class="f" id="aiq" placeholder="ask about this or the view…" aria-label="Ask AI"><button class="btn" data-act="ask" aria-label="Ask"><i data-lucide="send"></i></button><button class="btn" data-act="news" title="Latest news for the selection (free Google News)" aria-label="News"><i data-lucide="newspaper"></i></button></div>
+   <details style="margin-top:8px"><summary class="dim" style="cursor:pointer">LLM settings (free: Groq / Gemini / OpenRouter)</summary><div class="seg" style="margin-top:6px"><button class="btn" data-act="aip" data-v="groq">Groq</button><button class="btn" data-act="aip" data-v="gemini">Gemini</button><button class="btn" data-act="aip" data-v="or">OpenRouter</button><button class="btn" data-act="aip" data-v="ollama">Ollama (local, unlimited)</button></div>
+    <input class="f" id="aiu" placeholder="endpoint URL" style="margin-top:6px;width:100%"><input class="f" id="aim" placeholder="model" style="margin-top:6px;width:100%"><input class="f" id="aik" type="password" placeholder="API key (optional)" style="margin-top:6px;width:100%">
+    <button class="btn" data-act="saveai" style="margin-top:6px;width:100%;justify-content:center"><i data-lucide="check"></i>Save AI settings</button></details></div>
   <div class="p box"><h4><i data-lucide="search"></i>Find<span class="tag">Ctrl+K</span></h4>
    <div class="q"><input class="f" id="q" placeholder="callsign, camera, or any place…" aria-label="Search"><button class="btn" data-act="find" aria-label="Go"><i data-lucide="crosshair"></i></button></div>
    <div id="hits" style="margin-top:8px"></div></div>
@@ -141,14 +181,29 @@ input.f:focus{outline:2px solid var(--acc)}
    <div class="seg" id="bases"></div>
    <div class="seg" id="sens" style="margin-top:8px"></div>
    <div class="seg" style="margin-top:8px"><button class="btn" data-act="radar"><i data-lucide="cloud-rain"></i>Radar</button><button class="btn" data-act="g3d"><i data-lucide="box"></i>Google 3D</button></div></div>
-  <div class="p box"><h4><i data-lucide="radar"></i>Contacts<span class="tag">250 km</span></h4><div id="roster"></div></div>
-  <div class="p box"><h4><i data-lucide="key-round"></i>Keys<span class="tag">local only</span></h4>
-   <div class="q" style="margin-bottom:8px"><input class="f" id="wk" type="password" placeholder="Windy webcams key" aria-label="Windy key"><button class="btn" data-act="savewk" aria-label="Save"><i data-lucide="check"></i></button></div>
-   <div class="q"><input class="f" id="gk" type="password" placeholder="Google Maps key (Map Tiles API)" aria-label="Google key"><button class="btn" data-act="savegk" aria-label="Save"><i data-lucide="check"></i></button></div></div>
-  <div class="p box"><h4><i data-lucide="layers"></i>Layers<span class="tag" id="lc"></span></h4><div id="lstat"></div><button class="btn on" data-act="reload" style="margin-top:10px;width:100%;justify-content:center"><i data-lucide="refresh-cw"></i>Reload all</button></div>
+  <div class="p box" id="tracking-box"><h4><i data-lucide="radar"></i>Tracking contacts<span class="tag" id="trackcount">250 km · nearest 10</span></h4><p class="dim" style="font-size:11px;margin:-5px 0 9px">Merged feeds · duplicates removed · sorted from the current view centre.</p><div class="track-controls"><input class="f" id="trackfilter" placeholder="Filter callsign, name, source…" aria-label="Filter tracking contacts"><select class="f" id="tracklayer" aria-label="Filter by layer"><option value="all">All layers</option><option value="air">Aircraft</option><option value="sea">Ships</option><option value="sat">Satellites</option><option value="eq">Earthquakes</option><option value="fire">Fires</option><option value="evt">Events</option><option value="cam">Cameras</option><option value="rad">Radio</option><option value="bike">Bikes</option><option value="lch">Launches</option><option value="buoy">Buoys</option><option value="dis">Alerts</option></select></div><div id="roster" style="margin-top:8px"></div></div>
+  <div class="p box"><h4><i data-lucide="video"></i>Live cameras<span class="tag">15 s</span></h4><div id="wallbox"></div></div>
+  <div class="p box" id="integrations"><h4><i data-lucide="plug-zap"></i>Integrations &amp; API<span class="tag">settings</span></h4>
+   <p class="dim" style="font-size:11px;margin:-5px 0 9px">Optional provider credentials. Browser keys stay on this device; server keys are written to keys.json.</p><p class="dim" style="font-size:11px;margin-bottom:13px">Keyless feeds already wired in: USGS + EMSC + GEOFON, NASA EONET/FIRMS, Open-Meteo, Photon, CelesTrak, GDELT, GDACS, NWS, RainViewer, Radio-Browser, GBFS, Launch Library + SpaceX. Public services may rate-limit requests.</p>
+   <details open><summary class="dim">01 · Webcams &amp; maps</summary>
+    <div class="q" style="margin:8px 0"><input class="f" id="wk" type="password" placeholder="Windy webcams API key" aria-label="Windy key"><button class="btn" data-act="savewk" aria-label="Save Windy key"><i data-lucide="check"></i></button></div>
+    <div class="q"><input class="f" id="gk" type="password" placeholder="Google Maps Platform key" aria-label="Google key"><button class="btn" data-act="savegk" aria-label="Save Google key"><i data-lucide="check"></i></button></div>
+   </details>
+   <details><summary class="dim">02 · Aircraft &amp; vessel feeds</summary>
+    <div class="q" style="margin-top:8px"><input class="f" id="oi" placeholder="OpenSky client ID" aria-label="OpenSky client id"><input class="f" id="os" type="password" placeholder="Client secret" aria-label="OpenSky secret"></div>
+    <div class="q" style="margin-top:8px"><input class="f" id="ak" type="password" placeholder="AISStream API key" aria-label="AISStream key"></div>
+   </details>
+   <details><summary class="dim">03 · News &amp; intelligence</summary>
+    <p class="dim" style="font-size:11px;margin-top:8px">Google News RSS works without a key. AnswerLine is an optional fallback.</p>
+    <div class="q" style="margin-top:8px"><input class="f" id="an" type="password" placeholder="AnswerLine API key (optional)" aria-label="AnswerLine key"></div>
+   </details>
+   <div class="q" style="margin-top:12px"><button class="btn on" data-act="savesrv" style="flex:1;justify-content:center"><i data-lucide="server"></i>Save server keys</button><button class="btn" data-act="testkeys" style="justify-content:center"><i data-lucide="activity"></i>Check</button></div>
+   <p class="dim" id="keystatus" style="font-size:11px;margin-top:8px">Credentials are optional. Some feeds require running locally with node server.js.</p>
+  </div>
+  <div class="p box"><h4><i data-lucide="layers"></i>Layers<span class="tag" id="lc"></span></h4><div id="lstat"></div><button class="btn on" data-act="solo" style="margin-top:10px;width:100%;justify-content:center"><i data-lucide="moon"></i>Solo: one layer awake</button><button class="btn on" data-act="reload" style="margin-top:10px;width:100%;justify-content:center"><i data-lucide="refresh-cw"></i>Refresh enabled</button></div>
   <div class="p box"><h4><i data-lucide="terminal"></i>Event log</h4><div class="term" id="log"></div></div>
  </aside>
- <footer class="p foot"><span>All data live · no simulation</span><i class="fb"></i><span>Entities: <b id="ec">0</b></span><i class="fb"></i><span id="credit" class="dim">Esri · OSM · CARTO · NASA</span></footer>
+ <footer class="p foot"><span>Public-source data · freshness varies by provider</span><i class="fb"></i><span>Entities: <b id="ec">0</b></span><i class="fb"></i><span id="credit" class="dim">Esri · OSM · CARTO · NASA</span></footer>
 </div>
 
 <script>
@@ -158,107 +213,320 @@ const RAD=Math.PI/180,C=Cesium;
 const esc=t=>String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const safeUrl=u=>typeof u==='string'&&u.startsWith('https://')?u:'';
 const store={get:k=>{try{return localStorage.getItem(k)||''}catch(e){return ''}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}}};
-const CFG={windy:store.get('eye_windy')||'zRQuR5QELgVwC11t2GijCxQxl4p3751v',gkey:store.get('eye_gkey')};
-const CITIES=[['London',51.5,-0.1],['New York',40.7,-74],['Tokyo',35.7,139.7],['Sydney',-33.9,151.2],['Cairo',30,31.2],['São Paulo',-23.5,-46.6],['Mumbai',19,72.8],['Dhaka',23.8,90.4],['Lagos',6.5,3.4],['Moscow',55.7,37.6],['Los Angeles',34,-118.2],['Singapore',1.35,103.8]];
-const J=async(u,o)=>{const r=await fetch(u,{...o,signal:AbortSignal.timeout(25000)});if(!r.ok)throw new Error('HTTP '+r.status);return r};
+const CFG={windy:store.get('eye_windy')||'',gkey:store.get('eye_gkey')};
+const CITIES=[['London',51.5,-0.1],['New York',40.7,-74],['Tokyo',35.7,139.7],['Sydney',-33.9,151.2],['Cairo',30,31.2],['São Paulo',-23.5,-46.6],['Mumbai',19,72.8],['Dhaka',23.8,90.4],['Lagos',6.5,3.4],['Moscow',55.7,37.6],['Los Angeles',34,-118.2],['Singapore',1.35,103.8],['Paris',48.9,2.35],['Frankfurt',50.1,8.7],['Madrid',40.4,-3.7],['Rome',41.9,12.5],['Istanbul',41,29],['Dubai',25.2,55.3],['Delhi',28.6,77.2],['Karachi',24.9,67],['Tehran',35.7,51.4],['Bangkok',13.75,100.5],['Beijing',39.9,116.4],['Shanghai',31.2,121.5],['Seoul',37.6,127],['Hong Kong',22.3,114.2],['Jakarta',-6.2,106.8],['Manila',14.6,121],['Johannesburg',-26.2,28],['Nairobi',-1.3,36.8],['Addis Ababa',9,38.7],['Casablanca',33.6,-7.6],['Mexico City',19.4,-99.1],['Bogotá',4.7,-74.1],['Lima',-12,-77],['Buenos Aires',-34.6,-58.4],['Santiago',-33.4,-70.6],['Toronto',43.7,-79.4],['Chicago',41.9,-87.6],['Dallas',32.8,-96.8],['Miami',25.8,-80.2],['Seattle',47.6,-122.3],['Vancouver',49.3,-123.1],['Anchorage',61.2,-149.9],['Honolulu',21.3,-157.9],['Auckland',-36.8,174.8],['Perth',-31.9,115.9],['Stockholm',59.3,18.1],['Reykjavik',64.1,-21.9]];
+const J=async(u,o={})=>{const timeout=o.timeout||20000,{timeout:_timeout,...opts}=o;const r=await fetch(u,{...opts,signal:opts.signal||AbortSignal.timeout(timeout)});if(!r.ok)throw new Error('HTTP '+r.status);return r};
+const inflightGET=new Map();
+const apiMemo=new Map();
+async function getJSONOnce(url,ttl=30000){const now=Date.now(),hit=apiMemo.get(url);if(hit&&now-hit.t<ttl)return hit.v;if(inflightGET.has(url))return inflightGET.get(url);const job=(async()=>{try{const v=await(await J(url)).json();apiMemo.set(url,{t:Date.now(),v});return v}catch(e){const stale=apiMemo.get(url);if(stale)return stale.v;throw e}finally{inflightGET.delete(url)}})();inflightGET.set(url,job);return job}
 const mk=(id,o)=>({id,lat:0,lon:0,alt:0,hdg:0,spd:0,...o});
 const P=e=>C.Cartesian3.fromDegrees(e.lon,e.lat,e.alt||0);
 const KT=.514444,FT=.3048;
-/* =====================================================================
-   REGISTRY: LAYERS (UI + style) and LIVE (one async fetcher per layer).
-   Add a feature = add a LAYERS entry + a LIVE function returning entities.
-   ===================================================================== */
+
+/* Provider health: skip a source after repeated failures so a dead mirror can't sink the sweep. */
+const PHEALTH={};
+function pOk(n){if(PHEALTH[n])PHEALTH[n].fails=0;PHEALTH[n]={fails:0,until:0}}
+function pFail(n){const h=PHEALTH[n]||{fails:0,until:0};h.fails++;if(h.fails>=3)h.until=Date.now()+Math.min(5*60000,60000*h.fails);PHEALTH[n]=h;log('  '+n+' cooling down ('+h.fails+' fails)')}
+function pBlocked(n){const h=PHEALTH[n];return h&&Date.now()<h.until}
+
 const LAYERS=[
- {id:'air', name:'Air',   icon:'plane',      col:'--acc',  on:true, size:5,src:'adsb.lol (12 regions)',every:60e3},
- {id:'mil', name:'Military',icon:'shield',   col:'#ffb000',on:true, size:6,src:'adsb.lol /mil',every:60e3},
- {id:'sea', name:'Ships', icon:'ship',       col:'--acc3', on:true, size:3,src:'Digitraffic AIS (Finland/Baltic)',every:60e3},
- {id:'sat', name:'Sats',  icon:'satellite',  col:'--acc2', on:true, size:5,src:'CelesTrak + SGP4',every:36e5},
- {id:'eq',  name:'Quakes',icon:'activity',   col:'--hot',  on:true, size:6,src:'USGS 24h M2.5+',every:3e5},
- {id:'fire',name:'Fires', icon:'flame',      col:'--hot',  on:true, size:6,src:'NASA EONET',every:9e5},
- {id:'evt', name:'Events',icon:'zap',        col:'--acc3', on:false,size:6,src:'NASA EONET (storms, volcanoes…)',every:9e5},
- {id:'cam', name:'CCTV',  icon:'video',      col:'--acc',  on:true, size:5,src:'TfL · Caltrans · Singapore · Digitraffic · Windy',every:18e5},
- {id:'rad', name:'Radio', icon:'radio-tower',col:'--acc2', on:false,size:4,src:'Radio Browser',every:36e5},
- {id:'bike',name:'Bikes', icon:'bike',       col:'--acc3', on:false,size:3,src:'Citi Bike GBFS (NYC)',every:6e5},
- {id:'lch', name:'Launch',icon:'rocket',     col:'--hot',  on:true, size:9,src:'Launch Library 2',every:36e5},
+ {id:'air', name:'Air',   icon:'plane',      col:'--acc',  on:false, size:5,src:'Rotating global sweep across ADS-B mirrors, deduped by hex',every:60e3},
+ {id:'mil', name:'Military',icon:'shield',   col:'#ffb000',on:false, size:6,src:'/mil from every ADS-B mirror',every:60e3},
+ {id:'sea', name:'Ships', icon:'ship',       col:'--acc3', on:false, size:3,src:'AISStream global stream + Digitraffic AIS, deduped by MMSI',every:60e3},
+ {id:'sat', name:'Sats',  icon:'satellite',  col:'--acc2', on:false, size:5,src:'CelesTrak active + stations (server proxy)',every:36e5},
+ {id:'eq',  name:'Quakes',icon:'activity',   col:'--hot',  on:false, size:6,src:'USGS + EMSC + GEOFON 24h M2.5+, deduped',every:18e4},
+ {id:'fire',name:'Fires', icon:'flame',      col:'--hot',  on:false, size:6,src:'NASA EONET wildfires + VIIRS + MODIS',every:9e5},
+ {id:'evt', name:'Events',icon:'zap',        col:'--acc3', on:false,size:6,src:'NASA EONET non-wildfire categories',every:9e5},
+ {id:'cam', name:'CCTV',  icon:'video',      col:'--acc',  on:false, size:5,src:'TfL · Caltrans · Digitraffic · Singapore · Seattle · NSW · Hong Kong · Windy',every:6e5},
+ {id:'rad', name:'Radio', icon:'radio-tower',col:'--acc2', on:false,size:4,src:'Radio-Browser de1/de2 + all.api fallback',every:36e5},
+ {id:'bike',name:'Bikes', icon:'bike',       col:'--acc3', on:false,size:3,src:'GBFS NYC · CHI · SF · MTL · PAR + TfL',every:9e5},
+ {id:'lch', name:'Launch',icon:'rocket',     col:'--hot',  on:false, size:9,src:'Launch Library 2 + SpaceX',every:36e5},
+ {id:'buoy',name:'Buoys',icon:'anchor',col:'--acc2',on:false,size:5,src:'NOAA NDBC live + roster',every:18e5},
+ {id:'conf',name:'Conflict',icon:'swords',col:'--hot',on:false,size:7,src:'GDELT GEO 24h single themed query',every:18e5},
+ {id:'dis',name:'Alerts',icon:'siren',col:'--acc3',on:false,size:7,src:'GDACS + NWS severe warnings',every:18e5},
 ];
+/* Icons that definitely exist on Iconify MDI. */
+const IC={air:'mdi:airplane',mil:'mdi:shield-airplane',sea:'mdi:ferry',fire:'mdi:fire',evt:'mdi:alert-decagram',cam:'mdi:cctv',rad:'mdi:radio-tower',bike:'mdi:bike',lch:'mdi:rocket-launch',buoy:'mdi:anchor',conf:'mdi:bomb',dis:'mdi:alert'};
+const PX={air:16,mil:20,sea:13,sat:12,fire:14,evt:20,cam:15,rad:14,bike:11,lch:24,buoy:14};
+async function loadIcons(){await Promise.all(LAYERS.map(async l=>{for(const n of[].concat(IC[l.id]||[])){try{const t=await(await J('https://api.iconify.design/'+n.replace(':','/')+'.svg?color=%23ffffff&height=48',{timeout:8000})).text();if(!t.includes('<svg'))throw 0;l.img='data:image/svg+xml;base64,'+btoa(t);return}catch(e){}}}})}
 const L=id=>LAYERS.find(l=>l.id===id);
 const colOf=l=>l.col.startsWith('--')?css(l.col):l.col;
-let eonet=null;
-const getEonet=async()=>{if(!eonet)eonet=J('https://eonet.gsfc.nasa.gov/api/v3/events?status=open&limit=500').then(r=>r.json());setTimeout(()=>eonet=null,5000);return eonet};
-/* adsb.lol sends no CORS header, so in a browser it must go through server.js (npm-free, run: node server.js) */
+const mergeNote=(a,b)=>[...new Set([...(a.note||'').split(' · '),...(b.note||'').split(' · ')])].filter(Boolean).join(' · ');
+const mergeSources=(a,b)=>[...new Set([...(a.sources||[]),a.source,...(b.sources||[]),b.source].filter(Boolean))];
+function dedupe(list,keyFn,better){const m=new Map();for(const x of list){if(!x)continue;const k=keyFn(x);if(k==null||k==='')continue;const old=m.get(k);if(!old){m.set(k,x);continue}m.set(k,better(x,old)?x:old)}return [...m.values()]}
+
+let eonet=null,eonetAt=0,eonetFlight=null;
+const getEonet=async()=>{if(eonet&&Date.now()-eonetAt<5*60e3)return eonet;if(eonetFlight)return eonetFlight;eonetFlight=J('https://eonet.gsfc.nasa.gov/api/v3/events?status=open&limit=800').then(r=>r.json()).then(j=>(eonet=j,eonetAt=Date.now(),j)).catch(e=>{if(eonet)return eonet;throw e}).finally(()=>{eonetFlight=null});return eonetFlight};
+
 const LOCAL=/^https?:$/.test(location.protocol)&&['localhost','127.0.0.1'].includes(location.hostname);
-const adsbUrl=p=>LOCAL?'/api/adsb?p='+encodeURIComponent(p):'https://api.adsb.lol/v2'+p;
-const adsb=a=>a.lat!=null&&a.lon!=null&&typeof a.alt_baro==='number'?mk((a.flight||'').trim()||a.hex,{lat:a.lat,lon:a.lon,alt:a.alt_baro*FT,hdg:a.track||0,spd:(a.gs||0)*KT,note:[a.t,a.r].filter(Boolean).join(' · ')}):null;
+
+/* ---- aircraft providers: correct path per source ---- */
+/* adsb.lol / airplanes.live use /point/{lat}/{lon}/{dist}; adsb.fi v3 uses /v3/lat/{lat}/lon/{lon}/dist/{dist} */
+const AC_SRC = LOCAL
+ ?[{name:'merged ADS-B',base:null,path:(lat,lon)=>`/point/${lat}/${lon}/250`}]
+ :[
+    {name:'Airplanes.live',base:'https://api.airplanes.live/v2',path:(lat,lon)=>`/point/${lat}/${lon}/250`},
+    {name:'ADSB.fi',base:'https://opendata.adsb.fi/api',path:(lat,lon)=>`/v3/lat/${lat}/lon/${lon}/dist/250`}
+  ];
+const MIL_SRC = LOCAL
+ ?[{name:'merged ADS-B',base:null,path:()=>'/mil'}]
+ :[{name:'Airplanes.live',base:'https://api.airplanes.live/v2',path:()=>'/mil'}];
+const adsbUrl=p=>LOCAL?'/api/adsb?p='+encodeURIComponent(p):null;
+const buildAcUrl=(src,path)=>src.base?src.base+path:adsbUrl(path);
+const adsb=(a,source='ADS-B')=>a&&a.lat!=null&&a.lon!=null?(mk((a.flight||'').trim()||a.hex||a.icao,{hex:(a.hex||a.icao||'').toLowerCase(),sq:a.squawk,lat:+a.lat,lon:+a.lon,alt:typeof a.alt_baro==='number'?a.alt_baro*FT:0,hdg:+(a.track||a.true_heading||0),spd:+(a.gs||a.groundspeed||0)*KT,onGround:a.alt_baro==='ground',seenPos:+(a.seen_pos??a.seen??9999),source,note:[a.t,a.r,source].filter(Boolean).join(' · ')})):null;
+const acScore=x=>(Number.isFinite(x.seenPos)?-x.seenPos:0)+(x.alt?1:0)+(x.spd?1:0)+(x.note?0.2:0);
+
+const fx=u=>LOCAL?'/api/fetch?u='+encodeURIComponent(u):u;
+const pickImg=p=>{for(const k in p){const v=p[k];if(typeof v==='string'&&/^https?:\/\//.test(v)&&(/\.(jpe?g|png|gif)(\?|$)/i.test(v)||/image|img|snapshot/i.test(k)))return safeUrl(v.replace(/^http:/,'https:'))}return''};
+const pickName=p=>{for(const k in p)if(/name|title|location|desc/i.test(k)&&typeof p[k]==='string'&&p[k])return p[k];return''};
+const arc=async(url,t)=>(await(await J(fx(url+'/query?where=1%3D1&outFields=*&outSR=4326&f=geojson'))).json()).features.map((f,i)=>{const p=f.properties||{},u=pickImg(p),g=f.geometry;return u&&g&&g.type==='Point'?mk(t+' '+i,{lon:g.coordinates[0],lat:g.coordinates[1],note:pickName(p),img:u}):null}).filter(Boolean);
+
+/* ---- global aircraft sweep ---- */
+const AC={store:new Map(),grid:null,cursor:0,timer:null,busy:false,batch:LOCAL?16:10,cycle:30000,ttl:15*60e3,swept:0,lastBatch:0};
+function acGrid(){const g=[];for(let lat=-48;lat<=72;lat+=8){const cos=Math.max(.22,Math.cos(lat*RAD));const step=Math.min(60,Math.max(9,11/cos));for(let lon=-180;lon<180;lon+=step)g.push([+lat.toFixed(2),+lon.toFixed(2)])}return g.sort((a,b)=>Math.sin(a[0]*12.9898+a[1]*78.233)-Math.sin(b[0]*12.9898+b[1]*78.233))}
+function startSweep(){if(AC.timer)return;AC.timer=setInterval(()=>{if(document.hidden)return;if(!L('air').on&&!L('mil').on)return;acBatch()},AC.cycle);acBatch()}
+async function acBatch(){if(AC.busy)return;AC.busy=true;try{
+  if(!AC.grid){AC.grid=acGrid();AC.swept=0;log('> aircraft sweep: '+AC.grid.length+' cells · '+(LOCAL?'3 providers via proxy':'2 direct providers'))}
+  const srcs=AC_SRC.filter(s=>!pBlocked(s.name));
+  if(!srcs.length){log('> all ADS-B providers cooling down, skipping batch');return}
+  const n=AC.batch,picks=[];for(let i=0;i<n;i++)picks.push(AC.grid[AC.cursor++%AC.grid.length]);
+  const jobs=[];
+  for(const[lat,lon]of picks)for(const src of srcs){
+    const url=buildAcUrl(src,src.path(lat,lon));
+    if(!url)continue;
+    jobs.push(getJSONOnce(url,45000).then(j=>({p:src.name,rows:j.ac||[]})).then(r=>{pOk(src.name);return r}).catch(e=>{pFail(src.name);return null}));
+  }
+  const res=await Promise.all(jobs);let raw=0;
+  for(const r of res){if(!r)continue;raw+=r.rows.length;
+    for(const a of r.rows){const e=adsb(a,r.p);if(!e||!e.hex)continue;
+      const old=AC.store.get(e.hex);
+      if(!old){AC.store.set(e.hex,{e,t:Date.now(),src:'grid'});continue}
+      const best=acScore(e)>acScore(old.e)?e:old.e,other=best===e?old.e:e;
+      AC.store.set(e.hex,{e:{...other,...best,note:mergeNote(other,best),sources:mergeSources(other,best)},t:Date.now(),src:'grid'});
+    }
+  }
+  const cut=Date.now()-AC.ttl;for(const[k,v]of AC.store)if(v.t<cut)AC.store.delete(k);
+  AC.swept+=n;AC.lastBatch=Date.now();
+  if(L('air').on){const arr=[...AC.store.values()].map(v=>v.e);setEnts(L('air'),arr);const l=L('air');l.status='live';l.lastOk=Date.now()}
+  log(`> sweep ${AC.swept}/${AC.grid.length} cells · ${raw} raw → ${AC.store.size} tracked`);
+  renderLayers();
+}catch(e){log('> aircraft sweep error: '+e.message)}finally{AC.busy=false}}
+
+/* ---- OpenSky optional ---- */
+let openSkyAt=0,openSkyFlight=null,openSkyCheckAt=0,openSkyConfigured=false;
+function warmOpenSky(){if(!LOCAL||openSkyFlight||Date.now()-openSkyAt<120000||(Date.now()-openSkyCheckAt<30000&&!openSkyConfigured))return;
+ openSkyFlight=(async()=>{openSkyCheckAt=Date.now();const k=await getJSONOnce('/api/keys',30000).catch(()=>null);openSkyConfigured=!!(k&&k.opensky);if(!openSkyConfigured)return;
+  const j=await(await J('/api/opensky',{timeout:30000})).json(),now=Date.now()/1000,rows=(j.states||[]).filter(v=>v[0]&&v[5]!=null&&v[6]!=null&&!v[8]).map(v=>mk(String(v[1]||'').trim()||v[0],{hex:String(v[0]).toLowerCase(),lat:+v[6],lon:+v[5],alt:+(v[13]!=null?v[13]:v[7])||0,hdg:+v[10]||0,spd:+v[9]||0,note:[v[2],'OpenSky'].filter(Boolean).join(' · '),source:'OpenSky',seenPos:Math.max(0,now-(+v[3]||+v[4]||now))}));
+  for(const e of rows){const old=AC.store.get(e.hex);if(!old||old.src==='opensky')AC.store.set(e.hex,{e,t:Date.now(),src:'opensky'})}
+  if(L('air').on)setEnts(L('air'),[...AC.store.values()].map(v=>v.e));
+  log('  OpenSky cache warmed: '+rows.length+' positions')
+ })().catch(e=>{openSkyAt=Date.now();log('  OpenSky: '+e.message)}).finally(()=>{openSkyFlight=null})}
+
 const LIVE={
- air:async()=>{const m=new Map(),res=await Promise.allSettled(CITIES.map(c=>J(adsbUrl(`/point/${c[1]}/${c[2]}/150`)).then(r=>r.json())));
-  for(const r of res)if(r.status==='fulfilled')for(const a of(r.value.ac||[]).slice(0,80)){const e=adsb(a);if(e)m.set(a.hex,e)}
-  if(!m.size)throw new Error('no data');return[...m.values()]},
- mil:async()=>{const j=await(await J(adsbUrl('/mil'))).json();return(j.ac||[]).map(adsb).filter(Boolean)},
- sea:async()=>{const j=await(await J('https://meri.digitraffic.fi/api/ais/v1/locations')).json();
-  return j.features.filter(f=>f.geometry&&f.geometry.coordinates).map(f=>mk('MMSI '+f.properties.mmsi,{lon:f.geometry.coordinates[0],lat:f.geometry.coordinates[1],hdg:f.properties.cog<360?f.properties.cog:0,spd:(f.properties.sog<102?f.properties.sog:0)*KT}))},
- sat:async()=>{const t=await(await J('https://celestrak.org/NORAD/elements/gp.php?GROUP=visual&FORMAT=tle')).text();
-  const a=t.trim().split(/\r?\n/),o=[];for(let i=0;i+2<a.length;i+=3){try{o.push(mk(a[i].trim(),{rec:satellite.twoline2satrec(a[i+1],a[i+2])}))}catch(e){}}return o},
- eq:async()=>{const j=await(await J('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_day.geojson')).json();
-  return j.features.map(f=>mk(f.id,{lon:f.geometry.coordinates[0],lat:f.geometry.coordinates[1],mag:f.properties.mag,note:'M'+f.properties.mag+' · '+f.properties.place,url:safeUrl(f.properties.url)}))},
- fire:async()=>eon('wildfires',true),evt:async()=>eon('wildfires',false),
+ air:async()=>{startSweep();warmOpenSky();if(!AC.store.size)throw new Error('sweep warming up');return [...AC.store.values()].map(v=>v.e)},
+ mil:async()=>{
+   const srcs=MIL_SRC.filter(s=>!pBlocked(s.name));
+   if(!srcs.length)throw new Error('military providers cooling down');
+   const jobs=srcs.map(src=>{const u=buildAcUrl(src,src.path());return u?getJSONOnce(u,45000).then(j=>({p:src.name,rows:j.ac||[]})).then(r=>{pOk(src.name);return r}).catch(()=>{pFail(src.name);return null}):null}).filter(Boolean);
+   const res=await Promise.all(jobs);const out=[];let got=0;
+   for(const r of res){if(!r)continue;got++;for(const a of r.rows){const e=adsb(a,r.p);if(e)out.push(e)}}
+   if(!got)throw new Error('all military feeds failed');
+   const merged=dedupe(out,e=>e.hex||e.id,(a,b)=>acScore(a)>acScore(b));
+   log('  military merge: '+got+'/'+jobs.length+' feeds · '+merged.length+' contacts');return merged
+ },
+ sea:async()=>{
+   if(!LOCAL)throw new Error('AIS feeds need server.js (run: node server.js)');
+   const jobs=[];
+   try{jobs.push(J('https://meri.digitraffic.fi/api/ais/v1/locations').then(r=>r.json()).then(j=>j.features.filter(f=>f.geometry&&f.geometry.coordinates).map(f=>mk('MMSI '+f.properties.mmsi,{mmsi:String(f.properties.mmsi),lon:f.geometry.coordinates[0],lat:f.geometry.coordinates[1],hdg:f.properties.cog<360?f.properties.cog:0,spd:(f.properties.sog<102?f.properties.sog:0)*KT,source:'Digitraffic'}))).catch(()=>null))}catch(e){}
+   jobs.push(J('/api/ships').then(r=>r.json()).then(a=>a.map(s=>mk('MMSI '+s[0],{mmsi:String(s[0]),lat:+s[2],lon:+s[3],hdg:s[4]<360?+s[4]:0,spd:(s[5]<102?+s[5]:0)*KT,note:s[1]||'',stype:s[6],dest:s[7],source:'AISStream'}))).catch(()=>null));
+   const res=await Promise.all(jobs),byMmsi=new Map();let good=0;
+   for(const r of res){if(!r)continue;good++;for(const e of r){const id=String(e.mmsi);const old=byMmsi.get(id);if(!old){byMmsi.set(id,e);continue}const rich=x=>(x.note?1:0)+(x.stype?1:0)+(x.dest?1:0)+(x.spd?1:0),best=rich(e)>rich(old)?e:old,other=best===e?old:e;byMmsi.set(id,{...other,...best,note:best.note||other.note,source:[...new Set([other.source,best.source].filter(Boolean))].join(' + ')})}}
+   const out=[...byMmsi.values()];if(!out.length)throw new Error('add an AISStream key (free) to enable global ships');
+   log('  ship merge: '+good+'/'+jobs.length+' · '+out.length+' unique MMSIs');return out
+ },
+ sat:async()=>{
+   if(!LOCAL)throw new Error('satellites need server.js (CelesTrak rejects browser requests)');
+   const t=await(await J('/api/tle',{timeout:60000})).text();
+   if(!t.trim())throw new Error('empty TLE response');
+   const a=t.trim().split(/\r?\n/),o=[],seen=new Set();
+   for(let i=0;i+2<a.length;i+=3){const name=a[i].trim();if(seen.has(name))continue;seen.add(name);try{o.push(mk(name,{rec:satellite.twoline2satrec(a[i+1],a[i+2])}))}catch(e){}}
+   return o
+ },
+ eq:async()=>{
+   if(LOCAL){try{const j=await(await J('/api/quakes')).json();return (j.features||[]).map(f=>mk(f.id,{lon:f.geometry.coordinates[0],lat:f.geometry.coordinates[1],mag:f.properties.mag,note:'M'+f.properties.mag+' · '+f.properties.place+' · '+(f.properties.sources||['USGS']).join('+'),url:safeUrl(f.properties.url)}))}catch(e){log('  quake proxy: '+e.message)}}
+   const since=new Date(Date.now()-86400000).toISOString();
+   const srcs=[{n:'USGS',u:'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_day.geojson'},{n:'EMSC',u:'https://www.seismicportal.eu/fdsnws/event/1/query?format=json&minmag=2.5&limit=500&starttime='+encodeURIComponent(since)},{n:'GEOFON',u:'https://geofon.gfz-potsdam.de/fdsnws/event/1/query?format=json&minmagnitude=2.5&limit=500&starttime='+encodeURIComponent(since)}];
+   const res=await Promise.allSettled(srcs.map(s=>J(s.u).then(r=>r.json()).then(j=>({n:s.n,features:j.features||[]}))));
+   const out=[];
+   for(const r of res){if(r.status!=='fulfilled')continue;for(const f of r.value.features){const p=f.properties||{},g=f.geometry;if(!g||!g.coordinates||g.coordinates.length<2)continue;const lon=+g.coordinates[0],lat=+g.coordinates[1];const mag=+(p.mag??p.Mag??p.magnitude??NaN);if(!Number.isFinite(lat)||!Number.isFinite(lon)||!Number.isFinite(mag)||mag<2.5)continue;let time=0;const rawT=p.time??p.Time??p.originTime;if(typeof rawT==='number')time=rawT;else if(typeof rawT==='string')time=Date.parse(rawT)||0;const place=p.place||p.flynn_region||p.Flynn_region||p.region||'Unknown location';out.push(mk(r.value.n+' '+(f.id||p.source_id||`${time}:${lat.toFixed(2)}`),{lon,lat,mag,note:'M'+mag.toFixed(1)+' · '+place+' · '+r.value.n,time,url:safeUrl(p.url||''),sources:[r.value.n]}))}}
+   if(!out.length)throw new Error('quake feeds unavailable');
+   const hav2=(a,b,c,d)=>{const x=(c-a)*RAD,y=(d-b)*RAD,h=Math.sin(x/2)**2+Math.cos(a*RAD)*Math.cos(c*RAD)*Math.sin(y/2)**2;return 12742*Math.asin(Math.sqrt(h))};
+   const merged=[];
+   for(const q of out){const d=merged.find(x=>Math.abs(x.time-q.time)<120000&&Math.abs(x.mag-q.mag)<1.1&&hav2(x.lat,x.lon,q.lat,q.lon)<65);if(d){d.sources=[...new Set([...d.sources,...q.sources])]}else merged.push(q)}
+   log('  quake merge: '+out.length+' → '+merged.length);return merged
+ },
+ fire:async()=>{
+   const a=await eon(true).catch(()=>[]);
+   if(LOCAL)try{const r=await(await J('/api/fire')).json();a.push(...r.map(q=>mk('FIRE '+q[0].toFixed(2)+','+q[1].toFixed(2),{lat:q[0],lon:q[1],frp:q[2],note:'NASA VIIRS/MODIS · '+q[2]+' MW'})));log('  firms hotspots: '+r.length)}catch(e){log('  firms: '+e.message)}
+   return a
+ },
+ evt:async()=>eon(false),
  cam:async()=>{const src={
    TfL:async()=>(await(await J('https://api.tfl.gov.uk/Place/Type/JamCam')).json()).map(c=>{const p=k=>(c.additionalProperties.find(x=>x.key===k)||{}).value;return mk('TfL '+c.id,{lat:c.lat,lon:c.lon,note:c.commonName,img:safeUrl(p('imageUrl')),url:safeUrl(p('videoUrl'))})}),
-   Singapore:async()=>(await(await J('https://api.data.gov.sg/v1/transport/traffic-images')).json()).items[0].cameras.map(c=>mk('SG '+c.camera_id,{lat:c.location.latitude,lon:c.location.longitude,note:'Singapore expressway',img:safeUrl(c.image)})),
-   Caltrans:async()=>(await Promise.all([3,4,7,8,11,12].map(n=>J(`https://cwwp2.dot.ca.gov/data/d${n}/cctv/cctvStatusD${String(n).padStart(2,'0')}.json`).then(r=>r.json()).catch(()=>({data:[]}))))).flatMap(j=>j.data).map(o=>o.cctv).filter(c=>c&&c.inService==='true'&&c.imageData&&c.imageData.static&&c.imageData.static.currentImageURL).map(c=>mk('CA '+c.index+'-'+c.location.route,{lat:+c.location.latitude,lon:+c.location.longitude,note:c.location.locationName,img:safeUrl(c.imageData.static.currentImageURL)})),
+   Singapore:async()=>(await(await J('https://api.data.gov.sg/v1/transport/traffic-images')).json()).items[0].cameras.map(c=>mk('SG '+c.camera_id,{lat:c.location.latitude,lon:c.location.longitude,note:'Singapore',img:safeUrl(c.image)})),
+   Caltrans:async()=>(await Promise.all([1,2,3,4,5,6,7,8,9,10,11,12].map(n=>J(`https://cwwp2.dot.ca.gov/data/d${n}/cctv/cctvStatusD${String(n).padStart(2,'0')}.json`).then(r=>r.json()).catch(()=>({data:[]}))))).flatMap(j=>j.data).map(o=>o.cctv).filter(c=>c&&c.inService==='true'&&c.imageData&&c.imageData.static&&c.imageData.static.currentImageURL).map(c=>mk('CA '+c.index+'-'+c.location.route,{lat:+c.location.latitude,lon:+c.location.longitude,note:c.location.locationName,img:safeUrl(c.imageData.static.currentImageURL)})),
    Digitraffic:async()=>(await(await J('https://tie.digitraffic.fi/api/weathercam/v1/stations')).json()).features.filter(f=>f.properties.presets&&f.properties.presets[0]).map(f=>mk('FI '+f.properties.id,{lon:f.geometry.coordinates[0],lat:f.geometry.coordinates[1],note:f.properties.name,img:'https://weathercam.digitraffic.fi/'+f.properties.presets[0].id+'.jpg'})),
-   Windy:async()=>{if(!CFG.windy)throw new Error('no key');const r=await Promise.all(CITIES.map(c=>J(`https://api.windy.com/webcams/api/v3/webcams?nearby=${c[1]},${c[2]},100&limit=10&include=location,images,urls`,{headers:{'x-windy-api-key':CFG.windy}}).then(r=>r.json())));
+   NSW:async()=>{if(!LOCAL)throw new Error('needs server.js');return(await(await J(fx('https://data.livetraffic.com/cameras/traffic-cam.json'))).json()).features.map((f,i)=>{const p=f.properties||{},u=pickImg(p),g=f.geometry;return u&&g?mk('NSW '+i,{lon:g.coordinates[0],lat:g.coordinates[1],note:[p.title,p.view,p.direction].filter(Boolean).join(' · '),img:u}):null}).filter(Boolean)},
+   HongKong:async()=>{if(!LOCAL)throw new Error('needs server.js');const x=await(await J(fx('https://static.data.gov.hk/td/traffic-snapshot-images/code/Traffic_Camera_Locations_En.xml'))).text(),g=(s,t)=>{const m=s.match(new RegExp('<'+t+'>([^<]*)</'+t+'>','i'));return m?m[1].replace(/&amp;/g,'&').trim():''};return[...x.matchAll(/<image>([\s\S]*?)<\/image>/gi)].map(m=>{const s=m[1],la=+g(s,'latitude'),lo=+g(s,'longitude'),u=safeUrl(g(s,'url').replace(/^http:/,'https:'));return la&&lo&&u?mk('HK '+g(s,'key'),{lat:la,lon:lo,note:g(s,'description'),img:u}):null}).filter(Boolean)},
+   Seattle:()=>arc('https://services.arcgis.com/ZOyb2t4B0UYuYNYH/arcgis/rest/services/Traffic_Cameras_CDL/FeatureServer/0','SEA'),
+   Windy:async()=>{if(!CFG.windy)throw new Error('no key');const r=(await Promise.allSettled(CITIES.map(c=>J(`https://api.windy.com/webcams/api/v3/webcams?nearby=${c[1]},${c[2]},250&limit=40&include=location,images,urls`,{headers:{'x-windy-api-key':CFG.windy}}).then(r=>r.json())))).filter(x=>x.status==='fulfilled').map(x=>x.value);
     return r.flatMap(j=>j.webcams||[]).map(w=>mk('WINDY '+w.webcamId,{lat:w.location.latitude,lon:w.location.longitude,note:w.title,img:safeUrl(w.images&&w.images.current&&w.images.current.preview),url:safeUrl(w.urls&&w.urls.detail)}))}};
   const out=[];const res=await Promise.allSettled(Object.values(src).map(f=>f()));
   Object.keys(src).forEach((k,i)=>{const r=res[i];if(r.status==='fulfilled'){out.push(...r.value);log('  cctv '+k+': '+r.value.length)}else log('  cctv '+k+' failed ('+r.reason.message+')')});
-  if(!out.length)throw new Error('all CCTV sources failed');return out},
- rad:async()=>{let last;for(const h of['de1','nl1','at1']){try{const j=await(await J(`https://${h}.api.radio-browser.info/json/stations/search?has_geotag=true&limit=700&order=clickcount&reverse=true&hidebroken=true`)).json();
-   return j.filter(s=>s.geo_lat!=null&&safeUrl(s.url_resolved)).map(s=>mk('RADIO '+s.stationuuid.slice(0,6),{lat:s.geo_lat,lon:s.geo_long,note:s.name+' · '+(s.country||''),stream:s.url_resolved}))}catch(e){last=e}}throw last},
- bike:async()=>(await(await J('https://gbfs.citibikenyc.com/gbfs/en/station_information.json')).json()).data.stations.map(s=>mk('BIKE '+s.short_name,{lat:s.lat,lon:s.lon,note:s.name+' · '+s.capacity+' docks'})),
- lch:async()=>(await(await J('https://ll.thespacedevs.com/2.2.0/launch/upcoming/?limit=15')).json()).results.filter(r=>r.pad&&r.pad.latitude).map(r=>mk('LAUNCH '+r.name.split('|')[0].trim(),{lat:+r.pad.latitude,lon:+r.pad.longitude,note:r.name+' · '+new Date(r.net).toUTCString(),img:safeUrl(r.image)}))
+  if(!out.length)throw new Error('all CCTV sources failed');return out
+ },
+ rad:async()=>{
+   const mirrors=['de1','de2'],out=[];
+   for(const h of mirrors){try{const r=await J(`https://${h}.api.radio-browser.info/json/stations/search?has_geotag=true&limit=1500&order=clickcount&reverse=true&hidebroken=true`,{timeout:15000});const j=await r.json();for(const s of j){if(s.geo_lat==null||!safeUrl(s.url_resolved))continue;out.push(mk('RADIO '+String(s.stationuuid||'').slice(0,6),{lat:+s.geo_lat,lon:+s.geo_long,note:s.name+' · '+(s.country||''),stream:s.url_resolved,uuid:s.stationuuid}))}}catch(e){log('  radio '+h+': '+e.message)}}
+   if(!out.length){try{const j=await(await J('https://all.api.radio-browser.info/json/stations/search?has_geotag=true&limit=2000&order=clickcount&reverse=true&hidebroken=true',{timeout:20000})).json();for(const s of j){if(s.geo_lat==null||!safeUrl(s.url_resolved))continue;out.push(mk('RADIO '+String(s.stationuuid||'').slice(0,6),{lat:+s.geo_lat,lon:+s.geo_long,note:s.name+' · '+(s.country||''),stream:s.url_resolved,uuid:s.stationuuid}))}}catch(e){log('  radio all: '+e.message)}}
+   if(!out.length)throw new Error('radio mirrors unavailable');
+   const merged=dedupe(out,e=>e.uuid||e.id,()=>true);log('  radio: '+merged.length+' stations');return merged
+ },
+ bike:async()=>{
+   const gbfs=[['NYC','https://gbfs.citibikenyc.com/gbfs/en/station_information.json'],['CHI','https://gbfs.divvybikes.com/gbfs/en/station_information.json'],['SF','https://gbfs.lyft.com/gbfs/2.3/bay/en/station_information.json'],['MTL','https://gbfs.velobixi.com/gbfs/en/station_information.json'],['PAR','https://velib-metropole-opendata.smoove.pro/opendata/Velib_Metropole/station_information.json']];
+   const parse=(j,tag)=>{const s=(j&&j.data&&j.data.stations)||[];return s.map(x=>{const lat=+(x.lat??x.latitude),lon=+(x.lon??x.longitude);if(!Number.isFinite(lat)||!Number.isFinite(lon))return null;return mk(tag+' '+(x.station_id||x.short_name||x.stationCode||''),{lat,lon,note:(x.name||'')+' · '+(x.capacity||'?')+' docks'})}).filter(Boolean)};
+   const jobs=gbfs.map(([tag,u])=>J(u).then(r=>r.json()).then(j=>parse(j,tag)));
+   jobs.push(J('https://api.tfl.gov.uk/BikePoint').then(r=>r.json()).then(a=>a.map(p=>mk('LDN '+p.id,{lat:p.lat,lon:p.lon,note:p.commonName}))));
+   const res=await Promise.allSettled(jobs);const out=[];let ok=0;
+   for(const r of res){if(r.status==='fulfilled'){ok++;out.push(...r.value)}}
+   if(!out.length)throw new Error('all GBFS feeds failed');
+   log('  bike: '+ok+'/'+jobs.length+' feeds · '+out.length+' stations');return out
+ },
+ lch:async()=>{
+   let pads=[];
+   const spx=async()=>{const [ls,ps]=await Promise.all([J('https://api.spacexdata.com/v4/launches/upcoming').then(r=>r.json()),pads.length?Promise.resolve(pads):J('https://api.spacexdata.com/v4/pads').then(r=>r.json())]);pads=ps;
+     return ls.filter(l=>l.pad).map(l=>{const p=ps.find(x=>x.id===l.pad);if(!p)return null;return mk('SPACEX '+(l.name||'launch'),{lat:+p.latitude,lon:+p.longitude,note:(l.name||'')+' · '+new Date(l.date_utc).toUTCString(),img:safeUrl((l.links&&l.links.patch&&l.links.patch.small)||'')})}).filter(Boolean)};
+   const res=await Promise.allSettled([J('https://ll.thespacedevs.com/2.2.0/launch/upcoming/?limit=25').then(r=>r.json()).then(j=>j.results.filter(r=>r.pad&&r.pad.latitude).map(r=>mk('LAUNCH '+r.name.split('|')[0].trim(),{lat:+r.pad.latitude,lon:+r.pad.longitude,note:r.name+' · '+new Date(r.net).toUTCString(),img:safeUrl(r.image)}))),spx()]);
+   const out=[];for(const r of res)if(r.status==='fulfilled')out.push(...r.value);
+   if(!out.length)throw new Error('launch providers unavailable');return out
+ },
+ buoy:async()=>{
+   if(LOCAL){const j=await(await J('/api/buoys')).json();return j.map(b=>mk('BUOY '+b[0],{lat:b[1],lon:b[2],note:b[3]}))}
+   throw new Error('buoys need server.js');
+ },
+ conf:async()=>{
+   if(!LOCAL)throw new Error('GDELT needs server.js');
+   const q='(airstrike OR shelling OR missile OR "military operation")';
+   const url='https://api.gdeltproject.org/api/v2/geo/geo?query='+encodeURIComponent(q)+'&mode=PointData&format=GeoJSON&timespan=24h&sort=DateDesc';
+   const j=await(await J(fx(url),{timeout:25000})).json();
+   const out=[];
+   for(const f of (j.features||[])){
+     if(!f.geometry||f.geometry.type!=='Point')continue;
+     const name=String((f.properties&&f.properties.name)||'unknown').split(',')[0];
+     const lon=+f.geometry.coordinates[0],lat=+f.geometry.coordinates[1];
+     if(!Number.isFinite(lat)||!Number.isFinite(lon))continue;
+     out.push(mk('CONFLICT '+name,{lon,lat,note:'GDELT: '+((f.properties&&f.properties.count)||1)+' reports · '+name}));
+   }
+   if(!out.length)throw new Error('GDELT returned no points');
+   const merged=dedupe(out,e=>e.id+':'+e.lat.toFixed(1)+','+e.lon.toFixed(1),()=>true);
+   log('  conflict: '+out.length+' → '+merged.length);return merged
+ },
+ dis:async()=>{
+   const out=[];
+   if(LOCAL)try{const j=await(await J(fx('https://www.gdacs.org/gdacsapi/api/events/geteventlist/EVENTS4APP'),{timeout:25000})).json();for(const f of (j.features||[])){if(!f.geometry||f.geometry.type!=='Point')continue;const p=f.properties;out.push(mk('GDACS '+p.eventtype+p.eventid,{lon:f.geometry.coordinates[0],lat:f.geometry.coordinates[1],note:[p.alertlevel,p.eventtype,p.name||p.htmldescription,p.country].filter(Boolean).join(' · '),url:safeUrl(p.url&&p.url.report)}))}}catch(e){log('  gdacs: '+e.message)}
+   try{const j=await(await J('https://api.weather.gov/alerts/active?status=actual&message_type=alert&severity=Severe,Extreme&limit=500',{timeout:20000})).json();for(const f of (j.features||[])){const g=f.geometry,p=f.properties||{};if(!g)continue;let lon,lat;if(g.type==='Point'){[lon,lat]=g.coordinates}else if(g.type==='Polygon'){const ring=g.coordinates[0]||[];if(!ring.length)continue;lon=ring.reduce((a,c)=>a+c[0],0)/ring.length;lat=ring.reduce((a,c)=>a+c[1],0)/ring.length}else continue;if(!Number.isFinite(lat)||!Number.isFinite(lon))continue;out.push(mk('NWS '+(p.event||'alert')+' '+(p.id||'').slice(-6),{lon,lat,note:[p.severity,p.event,(p.areaDesc||'').slice(0,60)].filter(Boolean).join(' · ')}))}}catch(e){log('  nws: '+e.message)}
+   if(!out.length)throw new Error('alerts unavailable');return out
+ }
 };
-async function eon(cat,isCat){const j=await getEonet();return j.events.filter(v=>(v.categories[0].id===cat)===isCat).map(v=>{const g=v.geometry[v.geometry.length-1];return g&&g.type==='Point'?mk('EONET '+v.id,{lon:g.coordinates[0],lat:g.coordinates[1],note:v.title,url:safeUrl(v.link)}):null}).filter(Boolean)}
+async function eon(isWildfire){const j=await getEonet();return j.events.filter(v=>{const cat=v.categories&&v.categories[0]?v.categories[0].id:'';return isWildfire?cat==='wildfires':cat!=='wildfires'}).map(v=>{const g=v.geometry&&v.geometry[v.geometry.length-1];return g&&g.type==='Point'?mk('EONET '+v.id,{lon:g.coordinates[0],lat:g.coordinates[1],note:v.title+' · '+(v.categories[0]?v.categories[0].title:''),url:safeUrl(v.link)}):null}).filter(Boolean)}
 
-/* ---- basemaps (all free, keyless) ---- */
 const yday=new Date(Date.now()-864e5).toISOString().slice(0,10);
 const BASES={
- sat:{name:'Satellite',url:'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',max:19,cr:'Esri, Maxar, Earthstar Geographics'},
- osm:{name:'Streets',url:'https://tile.openstreetmap.org/{z}/{x}/{y}.png',max:19,cr:'© OpenStreetMap contributors'},
- dark:{name:'Dark',url:'https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',max:19,cr:'© CARTO © OpenStreetMap'},
- gibs:{name:'NASA daily',url:`https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_SNPP_CorrectedReflectance_TrueColor/default/${yday}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg`,max:9,cr:'NASA GIBS / VIIRS'},
+ sat:{name:'Satellite',url:'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',max:19,cr:'Esri, Maxar'},
+ osm:{name:'Streets',url:'https://tile.openstreetmap.org/{z}/{x}/{y}.png',max:19,cr:'© OpenStreetMap'},
+  ritual:{name:'Ritual',url:'',max:8,cr:'Natural Earth · Eye'},
+ gibs:{name:'NASA daily',url:`https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_SNPP_CorrectedReflectance_TrueColor/default/${yday}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg`,max:9,cr:'NASA GIBS'},
 };
 const SENSORS=['normal','crt','nvg','flir','noir','snow'];
-const S={sel:null,mode:'orbit',range:30000,fh:0,sensor:0,detect:true,base:'sat',radar:false,radarLayer:null,ctx:null,tour:null,g3d:null,want:null,hc:null};
+const S={sel:null,mode:'orbit',range:30000,fh:0,sensor:0,detect:true,base:(store.get('eye_boot')==='1'?'osm':'ritual'),solo:true,bulk:0,radar:false,radarLayer:null,ctx:null,tour:null,g3d:null,want:null,hc:null};
 
-/* ---- viewer ---- */
 C.Ion.defaultAccessToken='';
 const viewer=new C.Viewer('cesium',{baseLayer:false,baseLayerPicker:false,geocoder:false,homeButton:false,sceneModePicker:false,navigationHelpButton:false,animation:false,timeline:false,fullscreenButton:false,infoBox:false,selectionIndicator:false});
-const sc=viewer.scene,cam=viewer.camera;
+const sc=viewer.scene,cam=viewer.camera;cam.changed.addEventListener(()=>{sc.requestRender()});
 sc.backgroundColor=C.Color.BLACK;sc.globe.baseColor=C.Color.fromCssColorString('#07060b');sc.highDynamicRange=false;
 sc.screenSpaceCameraController.minimumZoomDistance=30;
-LAYERS.forEach(l=>{l.coll=sc.primitives.add(new C.PointPrimitiveCollection());l.coll.show=l.on;l.ents=[];l.status='…'});
+viewer.targetFrameRate=30;sc.requestRenderMode=true;sc.maximumRenderTimeChange=Infinity;sc.postProcessStages.fxaa.enabled=false;sc.msaaSamples=1;sc.globe.maximumScreenSpaceError=2.5;sc.fog.enabled=false;sc.globe.showGroundAtmosphere=false;
+LAYERS.forEach(l=>{l.coll=sc.primitives.add(new C.PointPrimitiveCollection());l.coll.show=l.on;l.ents=[];l.status='off'});
+
+const LAND='https://cdn.jsdelivr.net/gh/nvkelso/natural-earth-vector@master/geojson/';
+let ritualP=null,ritualKey='';
+const atmo=on=>{sc.skyAtmosphere.hueShift=on?-.53:0;sc.skyAtmosphere.saturationShift=on?.25:0;sc.globe.atmosphereHueShift=on?-.53:0;sc.globe.atmosphereSaturationShift=on?.25:0};
+function traceRings(g,features,X,Y){for(const f of features){const gm=f.geometry;if(!gm)continue;const polys=gm.type==='Polygon'?[gm.coordinates]:gm.type==='MultiPolygon'?gm.coordinates:gm.type==='LineString'?[[gm.coordinates]]:gm.type==='MultiLineString'?[gm.coordinates]:[];for(const poly of polys)for(const r of poly){if(!r||!r.length)continue;r.forEach((p,i)=>i?g.lineTo(X(p[0]),Y(p[1])):g.moveTo(X(p[0]),Y(p[1])));if(gm.type==='Polygon'||gm.type==='MultiPolygon')g.closePath()}}}
+async function ritualProvider(){
+  const theme=document.documentElement.dataset.theme||'base';
+  const accent=css('--acc')||'#ff8a5c';
+  const key=theme+'|'+accent;
+  if(ritualP&&ritualKey===key)return ritualP;
+  const W=4096,H=2048,cv=document.createElement('canvas');cv.width=W;cv.height=H;
+  const g=cv.getContext('2d'),X=lo=>(lo+180)/360*W,Y=la=>(90-la)/180*H;
+  g.fillStyle='#000000';g.fillRect(0,0,W,H);
+  const land=await(await J(LAND+'ne_110m_land.geojson')).json();
+  g.beginPath();traceRings(g,land.features,X,Y);g.fillStyle='#17151c';g.fill('evenodd');
+  let borders=null;try{borders=await(await J(LAND+'ne_110m_admin_0_boundary_lines_land.geojson')).json()}catch(e){log('> borders unavailable')}
+  g.beginPath();traceRings(g,land.features,X,Y);g.strokeStyle='#77737c';g.lineWidth=2.2;g.globalAlpha=.85;g.stroke();
+  g.strokeStyle='#25242a';g.lineWidth=1.2;g.globalAlpha=.8;g.beginPath();
+  for(let lo=-180;lo<=180;lo+=30){g.moveTo(X(lo),0);g.lineTo(X(lo),H)}
+  for(let la=-60;la<=60;la+=30){g.moveTo(0,Y(la));g.lineTo(W,Y(la))}g.stroke();g.globalAlpha=1;
+  g.fillStyle='#b7b4bc';for(const c of CITIES){g.beginPath();g.arc(X(c[2]),Y(c[1]),3.2,0,Math.PI*2);g.fill()}
+  if(borders&&borders.features&&borders.features.length){
+    const bc=document.createElement('canvas');bc.width=W;bc.height=H;const bg=bc.getContext('2d');
+    bg.strokeStyle=accent;bg.lineWidth=3.4;bg.lineJoin='round';bg.lineCap='round';
+    bg.beginPath();traceRings(bg,borders.features,X,Y);bg.stroke();
+    const gw=W>>1,gh=H>>1,gc=document.createElement('canvas');gc.width=gw;gc.height=gh;const gg=gc.getContext('2d');
+    if('filter' in gg){gg.filter='blur(9px)';gg.globalAlpha=.9;gg.drawImage(bc,0,0,gw,gh);gg.filter='blur(4px)';gg.globalAlpha=.8;gg.drawImage(bc,0,0,gw,gh);gg.filter='none';gg.globalAlpha=.55;gg.drawImage(bc,0,0,gw,gh)}
+    else{gg.globalAlpha=.6;gg.drawImage(bc,0,0,gw,gh)}
+    g.save();g.globalCompositeOperation='lighter';g.imageSmoothingEnabled=true;g.imageSmoothingQuality='high';g.drawImage(gc,0,0,W,H);g.globalAlpha=.95;g.drawImage(bc,0,0);g.restore();
+  }
+  const blob=await new Promise(r=>cv.toBlob(r,'image/png'));if(!blob)throw new Error('ritual texture failed');
+  const url=URL.createObjectURL(blob);
+  if(ritualP&&ritualP.__url)try{URL.revokeObjectURL(ritualP.__url)}catch(e){}
+  const prov=await C.SingleTileImageryProvider.fromUrl(url,{rectangle:C.Rectangle.MAX_VALUE,credit:'Natural Earth · Ritual'});prov.__url=url;ritualP=prov;ritualKey=key;return prov;
+}
+async function ritualApply(){await new Promise(r=>setTimeout(r,150));try{const p=await ritualProvider();if(S.base!=='ritual')return;const il=viewer.imageryLayers;il.removeAll();il.addImageryProvider(p);atmo(0);S.radarLayer=null;if(S.radar)addRadar();sc.requestRender()}catch(e){log('> ritual failed: '+e.message);setBase('sat')}}
 function setBase(k){S.base=k;const b=BASES[k],il=viewer.imageryLayers;il.removeAll();
- il.addImageryProvider(new C.UrlTemplateImageryProvider({url:b.url,maximumLevel:b.max,credit:b.cr}));
- S.radarLayer=null;if(S.radar)addRadar();renderBase()}
-async function addRadar(){try{const j=await(await J('https://api.rainviewer.com/public/weather-maps.json')).json(),f=j.radar.past[j.radar.past.length-1];
- S.radarLayer=viewer.imageryLayers.addImageryProvider(new C.UrlTemplateImageryProvider({url:j.host+f.path+'/256/{z}/{x}/{y}/2/1_1.png',maximumLevel:7,credit:'RainViewer'}));S.radarLayer.alpha=.65}catch(e){log('> radar failed ('+e.message+')')}}
-async function toggleG3d(){if(S.g3d){sc.primitives.remove(S.g3d);S.g3d=null;sc.globe.show=true;renderBase();return}
- if(!CFG.gkey)return toast('Add a Google Maps key (Map Tiles API) first');
- try{S.g3d=await C.Cesium3DTileset.fromUrl('https://tile.googleapis.com/v1/3dtiles/root.json?key='+encodeURIComponent(CFG.gkey));sc.primitives.add(S.g3d);sc.globe.show=false;viewer.scene.light=new C.DirectionalLight({direction:new C.Cartesian3(0,0,-1)});log('> Google photorealistic 3D tiles on')}catch(e){S.g3d=null;log('> Google 3D failed ('+e.message+')');toast('Google 3D failed: check key')}renderBase()}
+ if(k==='ritual')ritualApply();else{atmo(0);il.addImageryProvider(new C.UrlTemplateImageryProvider({url:b.url,maximumLevel:b.max,credit:b.cr}))}
+ S.radarLayer=null;if(S.radar)addRadar();renderBase();sc.requestRender()}
+async function addRadar(){try{const j=await(await J('https://api.rainviewer.com/public/weather-maps.json')).json(),f=j.radar.past[j.radar.past.length-1];S.radarLayer=viewer.imageryLayers.addImageryProvider(new C.UrlTemplateImageryProvider({url:j.host+f.path+'/256/{z}/{x}/{y}/2/1_1.png',maximumLevel:7,credit:'RainViewer'}));S.radarLayer.alpha=.65}catch(e){log('> radar: '+e.message)}}
+async function toggleG3d(){if(S.g3d){sc.primitives.remove(S.g3d);S.g3d=null;sc.globe.show=true;renderBase();return}if(!CFG.gkey)return toast('Add a Google Maps key first');try{S.g3d=await C.Cesium3DTileset.fromUrl('https://tile.googleapis.com/v1/3dtiles/root.json?key='+encodeURIComponent(CFG.gkey));sc.primitives.add(S.g3d);sc.globe.show=false;viewer.scene.light=new C.DirectionalLight({direction:new C.Cartesian3(0,0,-1)})}catch(e){S.g3d=null;toast('Google 3D failed')}renderBase()}
 
-/* ---- data ---- */
-function setEnts(l,arr){l.coll.removeAll();l.ents=arr;const c=C.Color.fromCssColorString(colOf(l)).withAlpha(.92);
- for(const e of arr){e.layer=l.id;e.prim=l.coll.add({position:P(e),pixelSize:l.id==='eq'?4+(e.mag||0)*1.6:l.size,color:c,outlineColor:C.Color.BLACK.withAlpha(.6),outlineWidth:1,id:e,disableDepthTestDistance:5e5})}
- if(S.sel&&S.sel.layer===l.id){const n=arr.find(x=>x.id===S.sel.id);S.sel=n||null;if(!n)setMode('orbit');renderInspector()}
- if(S.want){const w=arr.find(x=>x.id===S.want);if(w){S.want=null;select(w);setMode('follow')}}}
-function recolor(){for(const l of LAYERS){const c=C.Color.fromCssColorString(colOf(l)).withAlpha(.92);for(const e of l.ents)e.prim.color=c}}
-async function loadLayer(l){try{const arr=await LIVE[l.id]();if(!arr.length)throw new Error('empty');setEnts(l,arr);l.status='live';log('> '+l.id+': '+arr.length+' live')}catch(e){l.status='error';log('> '+l.id+' failed ('+e.message+')')}renderLayers()}
-async function loadAll(){for(const l of LAYERS)loadLayer(l)}
-function tickMove(dt){for(const id of['air','mil','sea']){const l=L(id);if(!l.on)continue;for(const e of l.ents){if(!e.spd)continue;const d=e.spd*dt,h=e.hdg*RAD;e.lat+=Math.cos(h)*d/111320;e.lon+=Math.sin(h)*d/(111320*Math.max(.1,Math.cos(e.lat*RAD)));e.prim.position=P(e)}}}
-function tickSat(){const l=L('sat');if(!l.on)return;const d=new Date(),g=satellite.gstime(d);for(const e of l.ents){if(!e.rec)continue;const pv=satellite.propagate(e.rec,d);if(!pv.position)continue;const gd=satellite.eciToGeodetic(pv.position,g);e.lat=satellite.degreesLat(gd.latitude);e.lon=satellite.degreesLong(gd.longitude);e.alt=gd.height*1000;e.prim.position=P(e)}}
-let lt=performance.now();setInterval(()=>{const n=performance.now();tickMove((n-lt)/1000);lt=n},250);setInterval(tickSat,1000);
-LAYERS.forEach(l=>setInterval(()=>{if(!document.hidden)loadLayer(l)},l.every));
+function setEnts(l,arr){
+ const bb=!!l.img;
+ if(bb!==!!l.bb){sc.primitives.remove(l.coll);l.coll=sc.primitives.add(bb?new C.BillboardCollection():new C.PointPrimitiveCollection());l.bb=bb;l.coll.show=l.on;l.ents=[]}
+ const old=new Map(l.ents.map(e=>[e.id,e])),next=[],c=C.Color.fromCssColorString(colOf(l)).withAlpha(.92);
+ for(const e of arr){e.layer=l.id;const prev=old.get(e.id);let prim;
+  if(prev&&prev.prim){prim=prev.prim;old.delete(e.id);const nextPos=P(e);if(!prim.position||C.Cartesian3.distance(prim.position,nextPos)>4)prim.position=nextPos;prim.id=e;
+   if(bb){prim.image=l.img;prim.width=prim.height=PX[l.id]||14;prim.rotation=['air','mil','sea'].includes(l.id)?-e.hdg*RAD:0}
+   else{prim.color=c;prim.pixelSize=l.id==='eq'?4+(e.mag||0)*1.6:l.size;prim.outlineColor=C.Color.BLACK.withAlpha(.6);prim.outlineWidth=1}
+  }else{const o={position:P(e),color:c,id:e,disableDepthTestDistance:5e5};if(bb){o.image=l.img;o.width=o.height=PX[l.id]||14;o.rotation=['air','mil','sea'].includes(l.id)?-e.hdg*RAD:0}else{o.pixelSize=l.id==='eq'?4+(e.mag||0)*1.6:l.size;o.outlineColor=C.Color.BLACK.withAlpha(.6);o.outlineWidth=1}prim=l.coll.add(o)}
+  e.prim=prim;next.push(e)
+ }
+ for(const e of old.values())if(e.prim)l.coll.remove(e.prim);
+ l.ents=next;
+ if(S.sel&&S.sel.layer===l.id){const n=next.find(x=>x.id===S.sel.id);S.sel=n||null;if(!n)setMode('orbit');renderInspector()}
+ if(S.want){const w=next.find(x=>x.id===S.want);if(w){S.want=null;select(w);setMode('follow')}}
+ sc.requestRender();
+}
+function recolor(){for(const l of LAYERS){const c=C.Color.fromCssColorString(colOf(l)).withAlpha(.92);for(const e of l.ents)if(e.prim&&!l.bb)e.prim.color=c}sc.requestRender()}
+async function loadLayer(l,force=false){if(l.loading)return;if(!force&&l.lastOk&&Date.now()-l.lastOk<Math.min(l.every,15000))return;l.loading=true;const started=performance.now();if(!l.ents.length)l.status='loading';else l.status='refreshing';renderLayers();
+ try{const arr=await LIVE[l.id]();if(!l.on){l.status='asleep';return}if(!arr.length)throw new Error('empty');setEnts(l,arr);l.status='live';l.lastOk=Date.now();l.latency=Math.round(performance.now()-started);l.error='';log('> '+l.id+': '+arr.length+' · '+l.latency+'ms')}
+ catch(e){l.error=e.message;l.status=l.ents.length?'stale':'error';log('> '+l.id+' '+l.status+' ('+e.message+')')}
+ finally{l.loading=false;renderLayers()}}
+async function loadAll(force=true){const q=LAYERS.filter(l=>l.on);let i=0;const worker=async()=>{while(i<q.length){const l=q[i++];await loadLayer(l,force)}};await Promise.all(Array.from({length:Math.min(4,q.length)},worker))}
+function tickMove(dt){if(!Number.isFinite(dt)||dt<=0)return;for(const id of['air','mil','sea']){const l=L(id);if(!l.on)continue;for(const e of l.ents){if(!e.spd)continue;const d=e.spd*dt,h=e.hdg*RAD;e.lat+=Math.cos(h)*d/111320;e.lon+=Math.sin(h)*d/(111320*Math.max(.1,Math.cos(e.lat*RAD)));if(e.prim)e.prim.position=P(e)}}}
+function tickSat(){const l=L('sat'),n=l.ents.length;if(!l.on||!n||document.hidden||camH>1.5e7)return;const d=new Date(),g=satellite.gstime(d),count=Math.min(700,n);for(let k=0;k<count;k++){const e=l.ents[si++%n];if(!e.rec)continue;const pv=satellite.propagate(e.rec,d);if(!pv.position)continue;const gd=satellite.eciToGeodetic(pv.position,g);e.lat=satellite.degreesLat(gd.latitude);e.lon=satellite.degreesLong(gd.longitude);e.alt=gd.height*1000;if(e.prim)e.prim.position=P(e)}sc.requestRender()}
+let lt=performance.now(),si=0,camH=2.4e7;setInterval(()=>{const n=performance.now();if(!document.hidden&&camH<=3e6){tickMove(Math.min((n-lt)/1000,2));sc.requestRender()}lt=n},1000);setInterval(tickSat,1000);
+LAYERS.forEach(l=>setInterval(()=>{if(!document.hidden&&l.on)loadLayer(l)},l.every));
 
-/* ---- camera modes ---- */
 sc.preRender.addEventListener(()=>{const e=S.sel;if(!e)return;
  if(S.mode==='follow')cam.lookAt(P(e),new C.HeadingPitchRange(S.fh,-.6,S.range));
  else if(S.mode==='cockpit')cam.setView({destination:C.Cartesian3.fromDegrees(e.lon,e.lat,e.alt+40),orientation:{heading:e.hdg*RAD,pitch:-.04,roll:0}})});
@@ -271,10 +539,9 @@ function setMode(m){if(m!=='orbit'&&!S.sel)return toast('Select a signal first')
 $('#cesium').addEventListener('wheel',e=>{if(S.mode==='follow'){S.range=Math.max(500,S.range*(e.deltaY>0?1.12:.89))}},{passive:true});
 function flyTo(lon,lat,h=8e5){setMode('orbit');cam.flyTo({destination:C.Cartesian3.fromDegrees(lon,lat,h),duration:2})}
 function globeView(){setMode('orbit');cam.flyTo({destination:C.Cartesian3.fromDegrees(20,25,2.4e7),duration:2})}
-function select(e){S.sel=e;if(!e)setMode('orbit');renderInspector();renderTools();if(e)log('> lock '+e.id)}
+function select(e){S.sel=e;if(!e)setMode('orbit');renderInspector();renderTools();if(e){log('> lock '+e.id);runAI(e)}else AI.n++}
 new C.ScreenSpaceEventHandler(viewer.canvas).setInputAction(m=>{const p=sc.pick(m.position);select(p&&p.id&&p.id.layer?p.id:null)},C.ScreenSpaceEventType.LEFT_CLICK);
 
-/* ---- tools ---- */
 const TOOLS=[
  {id:'detect',icon:'scan',label:'Detect',get:()=>S.detect,run:()=>S.detect=!S.detect},
  {id:'sensor',icon:'eye',label:'Sensor',get:()=>S.sensor>0,run:()=>setSensor((S.sensor+1)%SENSORS.length)},
@@ -286,33 +553,32 @@ const TOOLS=[
  {id:'reset',icon:'rotate-ccw',label:'Globe',get:()=>false,run:globeView},
 ];
 function setSensor(i){S.sensor=i;$('#cesium').className=i?'s-'+SENSORS[i]:'';renderSens();hud();toast('Sensor: '+SENSORS[i])}
-function setOn(l,v){l.on=v;l.coll.show=v;renderRail();renderLayers()}
-function ctxToggle(){if(S.ctx){LAYERS.forEach(l=>setOn(l,S.ctx.on.includes(l.id)));cam.setView(S.ctx.cam);S.ctx=null;log('> context restored')}
- else{S.ctx={on:LAYERS.filter(l=>l.on).map(l=>l.id),cam:{destination:cam.positionWC.clone(),orientation:{heading:cam.heading,pitch:cam.pitch,roll:cam.roll}}};LAYERS.forEach(l=>setOn(l,true));globeView();log('> global context: all layers')}}
-function tour(){if(S.tour){clearInterval(S.tour);S.tour=null;renderTools();return}let i=0;const go=()=>{const c=CITIES[i++%CITIES.length];flyTo(c[2],c[1],4e5);log('> tour: '+c[0])};go();S.tour=setInterval(go,8000);renderTools()}
+function setOn(l,v){if(v&&S.solo&&!S.bulk)LAYERS.forEach(o=>{if(o!==l&&o.on)setOn(o,false)});l.on=v;l.coll.show=v;
+ if(!v){if(S.sel&&S.sel.layer===l.id)select(null);l.coll.removeAll();l.ents=[];l.status='asleep'}
+ renderRail();renderLayers();if(v&&!l.ents.length&&l.status!=='loading')loadLayer(l)}
+function ctxToggle(){S.bulk=1;setTimeout(()=>S.bulk=0,0);if(S.ctx){LAYERS.forEach(l=>setOn(l,S.ctx.on.includes(l.id)));cam.setView(S.ctx.cam);S.ctx=null;log('> context restored')}
+ else{S.ctx={on:LAYERS.filter(l=>l.on).map(l=>l.id),cam:{destination:cam.positionWC.clone(),orientation:{heading:cam.heading,pitch:cam.pitch,roll:cam.roll}}};LAYERS.forEach(l=>setOn(l,true));globeView();log('> global context')}}
+function tour(){if(S.tour){clearInterval(S.tour);S.tour=null;renderTools();return}let i=0;const go=()=>{const c=CITIES[i++%CITIES.length];flyTo(c[2],c[1],4e5)};go();S.tour=setInterval(go,8000);renderTools()}
 function share(){const c=C.Cartographic.fromCartesian(cam.positionWC),st={b:S.base,s:S.sensor,l:LAYERS.filter(l=>l.on).map(l=>l.id),c:[+(c.longitude/RAD).toFixed(4),+(c.latitude/RAD).toFixed(4),Math.round(c.height),+(cam.heading/RAD).toFixed(1),+(cam.pitch/RAD).toFixed(1)],t:S.sel&&S.sel.id,m:S.mode};
- const u=location.href.split('#')[0]+'#'+btoa(unescape(encodeURIComponent(JSON.stringify(st))));navigator.clipboard&&navigator.clipboard.writeText(u).then(()=>toast('Share link copied')).catch(()=>toast('Copy failed'));location.hash=u.split('#')[1]}
-function restore(){try{const st=JSON.parse(decodeURIComponent(escape(atob(location.hash.slice(1)))));
- if(st.b&&BASES[st.b])S.base=st.b;LAYERS.forEach(l=>{l.on=st.l.includes(l.id);l.coll.show=l.on});if(st.s)S.sensor=st.s;
- if(st.c)cam.setView({destination:C.Cartesian3.fromDegrees(st.c[0],st.c[1],st.c[2]),orientation:{heading:st.c[3]*RAD,pitch:st.c[4]*RAD,roll:0}});S.want=st.t||null;return true}catch(e){return false}}
+ const u=location.href.split('#')[0]+'#'+btoa(unescape(encodeURIComponent(JSON.stringify(st))));navigator.clipboard&&navigator.clipboard.writeText(u).then(()=>toast('Copied')).catch(()=>toast('Copy failed'));location.hash=u.split('#')[1]}
+function restore(){try{const st=JSON.parse(decodeURIComponent(escape(atob(location.hash.slice(1)))));if(st.b&&BASES[st.b])S.base=st.b;LAYERS.forEach(l=>{l.on=st.l.includes(l.id);l.coll.show=l.on});if(st.s)S.sensor=st.s;if(st.c)cam.setView({destination:C.Cartesian3.fromDegrees(st.c[0],st.c[1],st.c[2]),orientation:{heading:st.c[3]*RAD,pitch:st.c[4]*RAD,roll:0}});S.want=st.t||null;return true}catch(e){return false}}
 
-/* ---- search / voice ---- */
-async function geocode(q){const j=await(await J('https://nominatim.openstreetmap.org/search?format=json&limit=1&q='+encodeURIComponent(q))).json();if(!j[0])throw new Error('not found');return j[0]}
+const geoCache=new Map();
+async function geocode(q){const k=q.trim().toLowerCase(),hit=geoCache.get(k);if(hit&&Date.now()-hit.t<864e5)return hit.v;const j=await getJSONOnce('https://photon.komoot.io/api/?q='+encodeURIComponent(q)+'&limit=1&lang=en',864e5);const f=j.features&&j.features[0];if(!f)throw new Error('not found');const v={lat:f.geometry.coordinates[1],lon:f.geometry.coordinates[0],display_name:[f.properties.name,f.properties.city,f.properties.state,f.properties.country].filter(Boolean).join(', ')};geoCache.set(k,{t:Date.now(),v});return v}
 async function find(){const q=$('#q').value.trim(),ql=q.toLowerCase();if(!q){$('#hits').innerHTML='';return}
  const hits=LAYERS.flatMap(l=>l.ents).filter(e=>(e.id+' '+(e.note||'')).toLowerCase().includes(ql)).slice(0,6);
  $('#hits').innerHTML=hits.map(e=>`<div class="row clk" data-id="${esc(e.id)}" style="--c:${esc(colOf(L(e.layer)))}"><i data-lucide="${L(e.layer).icon}"></i><span class="grow">${esc(e.id)}</span></div>`).join('')+`<div class="row clk" data-place="1"><i data-lucide="map-pin"></i><span class="grow">Go to “${esc(q)}”</span></div>`;lucide.createIcons()}
 $('#hits').addEventListener('click',async e=>{const r=e.target.closest('.row');if(!r)return;
- if(r.dataset.place){try{const p=await geocode($('#q').value);flyTo(+p.lon,+p.lat,6e4)}catch(x){toast('Place not found')}}
+ if(r.dataset.place){try{const p=await geocode($('#q').value);flyTo(+p.lon,+p.lat,6e4)}catch(x){toast('Not found')}}
  else{const en=LAYERS.flatMap(l=>l.ents).find(x=>x.id===r.dataset.id);if(en){const l=L(en.layer);if(!l.on)setOn(l,true);select(en);flyTo(en.lon,en.lat,3e5)}}});
-$('#q').addEventListener('input',find);$('#q').addEventListener('keydown',e=>{if(e.key==='Enter')find()});
-function voice(){const R=window.SpeechRecognition||window.webkitSpeechRecognition;if(!R)return toast('Voice not supported in this browser');const r=new R();r.lang='en-US';r.onresult=ev=>command(ev.results[0][0].transcript);r.onerror=()=>toast('Voice error');r.start();toast('Listening…')}
+let searchTimer=0;$('#q').addEventListener('input',()=>{clearTimeout(searchTimer);searchTimer=setTimeout(find,120)});$('#q').addEventListener('keydown',e=>{if(e.key==='Enter'){clearTimeout(searchTimer);find()}});
+function voice(){const R=window.SpeechRecognition||window.webkitSpeechRecognition;if(!R)return toast('Voice not supported');const r=new R();r.lang='en-US';r.onresult=ev=>command(ev.results[0][0].transcript);r.onerror=()=>toast('Voice error');r.start();toast('Listening…')}
 async function command(t){t=t.toLowerCase();log('> voice: '+t);
  const sm={'night vision':2,nvg:2,thermal:3,flir:3,crt:1,noir:4,snow:5,normal:0};for(const k in sm)if(t.includes(k))return setSensor(sm[k]);
  if(/globe|zoom out/.test(t))return globeView();if(t.includes('cockpit'))return setMode('cockpit');if(t.includes('follow'))return setMode('follow');
  const lm=t.match(/(show|hide)\s+(.+)/);if(lm){const l=LAYERS.find(l=>lm[2].includes(l.name.toLowerCase()));if(l)return setOn(l,lm[1]==='show')}
  const m=t.match(/(?:fly to|go to|zoom to|show me)\s+(.+)/);try{const p=await geocode(m?m[1]:t);flyTo(+p.lon,+p.lat,6e4)}catch(e){toast('Not understood')}}
 
-/* ---- render UI ---- */
 function log(t,h){const d=document.createElement('div');if(h)d.className='h';d.textContent=t;const l=$('#log');if(!l)return;l.append(d);l.scrollTop=1e9;while(l.children.length>80)l.firstChild.remove()}
 function toast(t){const d=document.createElement('div');d.className='toast';d.textContent=t;document.body.append(d);setTimeout(()=>d.remove(),2300)}
 function renderRail(){$('#rail').innerHTML=LAYERS.map(l=>`<button class="btn ${l.on?'on':''}" data-layer="${l.id}" style="--c:${colOf(l)}" title="${esc(l.src)}"><i class="c"></i><i data-lucide="${l.icon}"></i>${l.name}</button>`).join('');lucide.createIcons()}
@@ -321,24 +587,24 @@ function renderBase(){$('#bases').innerHTML=Object.entries(BASES).map(([k,b])=>`
  $$('[data-act=radar]').forEach(b=>b.classList.toggle('on',S.radar));$$('[data-act=g3d]').forEach(b=>b.classList.toggle('on',!!S.g3d))}
 function renderSens(){$('#sens').innerHTML=SENSORS.map((s,i)=>`<button class="btn ${S.sensor===i?'on':''}" data-sens="${i}">${i+1} ${s}</button>`).join('')}
 function renderLayers(){$('#lc').textContent=LAYERS.filter(l=>l.on).length+'/'+LAYERS.length;$('#ec').textContent=LAYERS.reduce((a,l)=>a+l.ents.length,0);
- $('#lstat').innerHTML=LAYERS.map(l=>`<div class="row" style="--c:${colOf(l)}" title="${esc(l.src)}"><i data-lucide="${l.icon}"></i><span class="grow">${l.name}<span class="tag" style="margin-left:6px;${l.status==='live'?'color:var(--acc);border-color:var(--acc)':l.status==='error'?'color:var(--hot);border-color:var(--hot)':''}">${l.status}</span></span><span class="dim">${l.ents.length}</span></div>`).join('');lucide.createIcons()}
+ $('#lstat').innerHTML=LAYERS.map(l=>`<div class="row" style="--c:${colOf(l)}" title="${esc(l.src)}"><i data-lucide="${l.icon}"></i><span class="grow">${l.name}<span class="tag" title="${l.lastOk?'Updated '+new Date(l.lastOk).toLocaleTimeString():'No update'}${l.latency?' · '+l.latency+'ms':''}${l.error?' · '+esc(l.error):''}" style="margin-left:6px;${['live','refreshing'].includes(l.status)?'color:var(--acc);border-color:var(--acc)':l.status==='stale'||l.status==='error'?'color:var(--hot);border-color:var(--hot)':''}">${l.status}${l.latency?' · '+l.latency+'ms':''}</span></span><span class="dim">${l.ents.length}</span></div>`).join('');lucide.createIcons()}
 const audio=new Audio();let camTimer=0;
 function renderInspector(){const e=S.sel,el=$('#inspector');clearInterval(camTimer);
- if(!e){el.innerHTML='<h4><i data-lucide="mouse-pointer-click"></i>Inspector</h4><p class="dim">Nothing selected. Click a signal on the globe, or search.</p>';lucide.createIcons();return}
+ if(!e){el.innerHTML='<h4><i data-lucide="mouse-pointer-click"></i>Inspector</h4><p class="dim">Nothing selected.</p>';lucide.createIcons();return}
  const l=L(e.layer),alt=e.alt>1e4?(e.alt/1e3).toFixed(0)+' km':Math.round(e.alt)+' m';
  el.innerHTML=`<h4><i data-lucide="${l.icon}"></i>${l.name}<span class="tag">${S.mode}</span></h4><div class="ent">${esc(e.id)}</div>${e.note?`<p class="dim" style="margin-bottom:6px">${esc(e.note)}</p>`:''}
  ${e.img?`<img id="ci" src="${esc(e.img)}" alt="" style="width:100%;border-radius:12px 2px 12px 2px;margin:4px 0 8px;display:block" onerror="this.style.display='none'">`:''}
  <div class="kv"><span>lat</span><span id="i-la"></span></div><div class="kv"><span>lon</span><span id="i-lo"></span></div>
  ${e.layer!=='eq'&&e.alt?`<div class="kv"><span>altitude</span><span>${alt}</span></div>`:''}${e.spd?`<div class="kv"><span>speed</span><span>${Math.round(e.spd/KT)} kn</span></div><div class="kv"><span>heading</span><span>${Math.round(e.hdg)}°</span></div>`:''}
+ ${(e.sources&&e.sources.length>1)?`<div class="kv"><span>merged from</span><span>${esc(e.sources.join(' + '))}</span></div>`:''}
  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button class="btn on" data-act="flyto">Fly to</button><button class="btn" data-tool="follow">Follow</button>${['air','mil'].includes(e.layer)?'<button class="btn" data-tool="cockpit">Cockpit</button>':''}
  ${e.stream?'<button class="btn" data-act="play"><i data-lucide="play"></i>Listen</button>':''}${e.url?`<a class="btn" href="${esc(e.url)}" target="_blank" rel="noopener noreferrer" style="text-decoration:none">Source</a>`:''}</div>`;
- lucide.createIcons();if(e.img)camTimer=setInterval(()=>{const i=$('#ci');if(i)i.src=e.img+(e.img.includes('?')?'&':'?')+'_='+Date.now()},20000)}
+ lucide.createIcons();if(e.img)camTimer=setInterval(()=>{const i=$('#ci');if(i)i.src=e.img+(e.img.includes('?')?'&':'?')+'_='+Date.now()},10000)}
 function liveInspector(){const e=S.sel;if(!e)return;const a=$('#i-la'),o=$('#i-lo');if(a)a.textContent=e.lat.toFixed(4);if(o)o.textContent=e.lon.toFixed(4)}
 
-/* ---- HUD, detection overlay, contacts ---- */
 const hav=(a,b,c,d)=>{const x=(c-a)*RAD,y=(d-b)*RAD,h=Math.sin(x/2)**2+Math.cos(a*RAD)*Math.cos(c*RAD)*Math.sin(y/2)**2;return 12742*Math.asin(Math.sqrt(h))};
 function hud(){const cv=viewer.canvas,cc=new C.Cartesian2(cv.clientWidth/2,cv.clientHeight/2),p=cam.pickEllipsoid(cc,sc.globe.ellipsoid),car=C.Cartographic.fromCartesian(p||cam.positionWC);
- const la=car.latitude/RAD,lo=car.longitude/RAD,h=C.Cartographic.fromCartesian(cam.positionWC).height;S.hc=[la,lo];
+ const la=car.latitude/RAD,lo=car.longitude/RAD,h=C.Cartographic.fromCartesian(cam.positionWC).height;S.hc=[la,lo];camH=h;
  $('#hud-tl').innerHTML=`<b>SENSOR</b> ${SENSORS[S.sensor].toUpperCase()}<br><b>MODE</b> ${S.mode.toUpperCase()}`;
  $('#hud-tr').innerHTML=`<b>LAT</b> ${la.toFixed(2)}°<br><b>LON</b> ${lo.toFixed(2)}°`;
  $('#hud-bl').innerHTML=`<b>ALT</b> ${(h/1000).toFixed(h>1e5?0:1)} km<br><b>HDG</b> ${(cam.heading/RAD).toFixed(0)}°`;
@@ -346,44 +612,108 @@ function hud(){const cv=viewer.canvas,cc=new C.Cartesian2(cv.clientWidth/2,cv.cl
 function drawDet(){const c=$('#det'),w=c.clientWidth,h=c.clientHeight;if(c.width!==w||c.height!==h){c.width=w;c.height=h}const g=c.getContext('2d');g.clearRect(0,0,w,h);
  const occ=new C.EllipsoidalOccluder(C.Ellipsoid.WGS84,cam.positionWC),hgt=C.Cartographic.fromCartesian(cam.positionWC).height,vis=[];
  const near=(x,y)=>x>0&&y>0&&x<w&&y<h;
- if(S.detect)for(const l of LAYERS){if(!l.on||(['sea','bike','rad'].includes(l.id)&&hgt>2e6))continue;for(const e of l.ents){const p=P(e);if(!occ.isPointVisible(p))continue;const s=sc.cartesianToCanvasCoordinates(p);if(s&&near(s.x,s.y))vis.push([Math.hypot(s.x-w/2,s.y-h/2),s.x,s.y,e,l])}}
+ if(S.detect&&S.hc&&camH<4e6){const R=Math.max(2,camH/111320*.8);let checked=0;for(const l of LAYERS){if(!l.on||['sat','cam','rad','bike'].includes(l.id)||(l.id==='sea'&&hgt>2e6))continue;for(const e of l.ents){if(++checked>1600)break;if(Math.abs(e.lat-S.hc[0])>R||Math.abs(e.lon-S.hc[1])>R*2.5)continue;const p=P(e);if(!occ.isPointVisible(p))continue;const s=sc.cartesianToCanvasCoordinates(p);if(s&&near(s.x,s.y))vis.push([Math.hypot(s.x-w/2,s.y-h/2),s.x,s.y,e,l])}if(checked>1600)break}}
  vis.sort((a,b)=>a[0]-b[0]);g.font="10px 'JetBrains Mono',monospace";g.lineWidth=1;
  for(const[,x,y,e,l]of vis.slice(0,30)){const col=colOf(l),s=9;g.strokeStyle=col;g.fillStyle=col;g.globalAlpha=.85;g.beginPath();[[-1,-1],[1,-1],[1,1],[-1,1]].forEach(([a,b])=>{g.moveTo(x+a*s,y+b*s*.4);g.lineTo(x+a*s,y+b*s);g.lineTo(x+a*s*.4,y+b*s)});g.stroke();g.fillText(e.id.slice(0,18),x+s+3,y-s+2);g.globalAlpha=1}
  if(S.sel&&S.mode==='orbit'){const p=P(S.sel);if(occ.isPointVisible(p)){const s=sc.cartesianToCanvasCoordinates(p);if(s){g.strokeStyle=css('--fg');g.lineWidth=1.5;g.beginPath();g.arc(s.x,s.y,14,0,6.2832);g.stroke()}}}}
-setInterval(drawDet,150);setInterval(hud,400);
-function roster(){if(!S.hc)return;const out=[];for(const l of LAYERS){if(!l.on||['sea','bike','rad'].includes(l.id))continue;for(const e of l.ents){const d=hav(S.hc[0],S.hc[1],e.lat,e.lon);if(d<250)out.push([d,e,l])}}
- out.sort((a,b)=>a[0]-b[0]);$('#roster').innerHTML=out.slice(0,8).map(([d,e,l])=>`<div class="row clk" data-id="${esc(e.id)}" style="--c:${colOf(l)}"><i data-lucide="${l.icon}"></i><span class="grow">${esc(e.id.slice(0,22))}</span><span class="dim">${d.toFixed(0)} km</span></div>`).join('')||'<p class="dim">No contacts within 250 km of view centre.</p>';lucide.createIcons()}
-setInterval(roster,2500);
-$('#roster').addEventListener('click',e=>{const r=e.target.closest('.row');if(!r)return;const en=LAYERS.flatMap(l=>l.ents).find(x=>x.id===r.dataset.id);if(en)select(en)});
+setInterval(drawDet,200);setInterval(hud,850);
+let rosterKey='';function roster(force=false){if(!S.hc||document.hidden)return;const q=($('#trackfilter')?.value||'').trim().toLowerCase(),wanted=$('#tracklayer')?.value||'all',out=[];
+ for(const l of LAYERS){if(!l.on||l.id==='rad'||l.id==='mil'||l.id==='conf'||(wanted!=='all'&&wanted!==l.id))continue;for(const e of l.ents){if(Math.abs(e.lat-S.hc[0])>3)continue;const d=hav(S.hc[0],S.hc[1],e.lat,e.lon);if(d>=250)continue;const hay=(e.id+' '+(e.note||'')+' '+(e.source||'')+' '+l.name).toLowerCase();if(q&&!hay.includes(q))continue;out.push([d,e,l])}}
+ out.sort((a,b)=>a[0]-b[0]);const top=out.slice(0,10),key=q+'|'+wanted+'|'+top.map(([d,e,l])=>l.id+'::'+e.id+':'+Math.round(d/5)).join('|');$('#trackcount').textContent=out.length+' · 250 km';if(!force&&key===rosterKey)return;rosterKey=key;
+ $('#roster').innerHTML=top.map(([d,e,l])=>`<div class="row clk" data-id="${esc(l.id+'::'+e.id)}" title="${esc(l.name+' · '+e.id)}" style="--c:${colOf(l)}"><i data-lucide="${l.icon}"></i><span class="grow"><span class="track-name">${esc(e.id.slice(0,30))}</span><span class="track-type">${esc(l.name)}${e.source?' · '+esc(e.source):''}</span></span><span class="dim">${d.toFixed(0)} km</span></div>`).join('')||`<p class="dim" style="font-size:11px;padding:6px 0">${q?'No matches.':'No contacts within 250 km.'}</p>`;lucide.createIcons()}
+setInterval(roster,5000);
+$('#roster').addEventListener('click',e=>{const r=e.target.closest('.row');if(!r)return;const bits=r.dataset.id.split('::'),layer=bits.shift(),id=bits.join('::'),en=L(layer)?.ents.find(x=>x.id===id);if(en)select(en)});
+$('#trackfilter').addEventListener('input',()=>roster(true));$('#tracklayer').addEventListener('change',()=>roster(true));
 
-/* ---- events ---- */
 document.addEventListener('click',e=>{
- const lb=e.target.closest('[data-layer]');if(lb){const l=L(lb.dataset.layer);setOn(l,!l.on);log('> layer '+l.id+(l.on?' on':' off'));return}
+ const lb=e.target.closest('[data-layer]');if(lb){const l=L(lb.dataset.layer);setOn(l,!l.on);return}
  const tb=e.target.closest('[data-tool]');if(tb){TOOLS.find(t=>t.id===tb.dataset.tool).run();renderTools();return}
  const bb=e.target.closest('[data-base]');if(bb){if(S.g3d)toggleG3d();setBase(bb.dataset.base);return}
  const sb=e.target.closest('[data-sens]');if(sb){setSensor(+sb.dataset.sens);return}
  const a=e.target.closest('[data-act]');if(!a)return;const k=a.dataset.act;
- if(k==='theme'){const T=['','moss','violet','mist','red'],i=(T.indexOf(document.documentElement.dataset.theme||'')+1)%T.length;T[i]?document.documentElement.dataset.theme=T[i]:delete document.documentElement.dataset.theme;recolor();renderRail();renderLayers()}
+ if(k==='theme'){const T=['','moss','violet','mist','red'],i=(T.indexOf(document.documentElement.dataset.theme||'')+1)%T.length;T[i]?document.documentElement.dataset.theme=T[i]:delete document.documentElement.dataset.theme;recolor();renderRail();renderLayers();if(S.base==='ritual'){ritualP=null;ritualApply()}}
  if(k==='crt'){document.body.classList.toggle('crt');a.classList.toggle('on')}
- if(k==='voice')voice();if(k==='find')find();if(k==='reload'){log('> reloading all layers');loadAll()}
+ if(k==='voice')voice();if(k==='find')find();if(k==='reload'){log('> refreshing');loadAll(true)}
  if(k==='radar'){S.radar=!S.radar;if(S.radar)addRadar();else if(S.radarLayer){viewer.imageryLayers.remove(S.radarLayer);S.radarLayer=null}renderBase()}
  if(k==='g3d')toggleG3d();
- if(k==='savewk'){CFG.windy=$('#wk').value.trim();store.set('eye_windy',CFG.windy);toast('Key saved');loadLayer(L('cam'))}
- if(k==='savegk'){CFG.gkey=$('#gk').value.trim();store.set('eye_gkey',CFG.gkey);toast('Key saved')}
+ if(k==='savewk'){CFG.windy=$('#wk').value.trim();store.set('eye_windy',CFG.windy);toast('Saved');loadLayer(L('cam'))}
+ if(k==='testkeys'){const el=$('#keystatus');if(!LOCAL){el.textContent='Requires localhost.';return toast('Run via server.js')}fetch('/api/keys').then(r=>r.json()).then(j=>{el.textContent='OpenSky '+(j.opensky?'✓':'✗')+' · AISStream '+(j.aisstream?'✓':'✗')+' · '+j.ships+' ships';toast('Checked')}).catch(()=>{el.textContent='Cannot reach local API.'})}
+ if(k==='savegk'){CFG.gkey=$('#gk').value.trim();store.set('eye_gkey',CFG.gkey);toast('Saved')}
+ if(k==='savesrv'){if(!LOCAL)return toast('Run via server.js');const b={aisstream:$('#ak').value.trim(),opensky_id:$('#oi').value.trim(),opensky_secret:$('#os').value.trim(),answerline:$('#an').value.trim()};
+  fetch('/api/keys',{method:'POST',body:JSON.stringify(b)}).then(r=>r.json()).then(()=>{toast('Saved');['#ak','#oi','#os','#an'].forEach(i=>$(i).value='');setTimeout(()=>{loadLayer(L('air'));loadLayer(L('sea'))},3000)}).catch(()=>toast('Save failed'))}
+ if(k==='ask')ask();if(k==='news')getNews();if(k==='solo'){S.solo=!S.solo;a.classList.toggle('on',S.solo);toast(S.solo?'Solo mode':'Multi mode')}if(k==='aip'){const p={groq:['https://api.groq.com/openai/v1/chat/completions','llama-3.3-70b-versatile'],gemini:['https://generativelanguage.googleapis.com/v1beta/openai/chat/completions','gemini-2.0-flash'],or:['https://openrouter.ai/api/v1/chat/completions','meta-llama/llama-3.3-70b-instruct:free'],ollama:['http://localhost:11434/v1/chat/completions','llama3.2']}[a.dataset.v];$('#aiu').value=p[0];$('#aim').value=p[1];$('#aik').focus()}if(k==='saveai'){AI.u=$('#aiu').value.trim()||AI.u;AI.m=$('#aim').value.trim()||AI.m;AI.k=$('#aik').value.trim();store.set('eye_aiu',AI.u);store.set('eye_aim',AI.m);store.set('eye_aik',AI.k);AI.cache.clear();toast('Saved')}
  if(k==='flyto'&&S.sel)flyTo(S.sel.lon,S.sel.lat,S.sel.layer==='sat'?6e6:S.sel.layer==='air'||S.sel.layer==='mil'?4e4:1.5e5);
- if(k==='play'&&S.sel&&S.sel.stream){if(!audio.paused&&audio.src===S.sel.stream){audio.pause();toast('Stopped')}else{audio.src=S.sel.stream;audio.play().then(()=>toast('Playing')).catch(()=>toast('Stream blocked'))}}});
+ if(k==='play'&&S.sel&&S.sel.stream){if(!audio.paused&&audio.src===S.sel.stream){audio.pause();toast('Stopped')}else{audio.src=S.sel.stream;audio.play().then(()=>toast('Playing')).catch(()=>toast('Blocked'))}}});
 addEventListener('keydown',e=>{const t=e.target.tagName;if((e.metaKey||e.ctrlKey)&&e.key==='k'){e.preventDefault();$('#q').focus();return}
  if(e.key==='Escape'){if(S.ctx)ctxToggle();select(null);return}
  if(t==='INPUT')return;if(/^[1-6]$/.test(e.key))setSensor(+e.key-1)});
 
-/* ---- boot ---- */
-$('#wk').value=CFG.windy;$('#gk').value=CFG.gkey;
+function wall(){const el=$('#wallbox');if(!el||document.hidden)return;const l=L('cam');
+ if(!l.on||!S.hc||camH>3e6){if(el.dataset.k!=='x'){el.innerHTML='<p class="dim">Zoom in over a city.</p>';el.dataset.k='x'}return}
+ const out=[];for(const e of l.ents){if(!e.img||Math.abs(e.lat-S.hc[0])>3)continue;out.push([hav(S.hc[0],S.hc[1],e.lat,e.lon),e])}
+ out.sort((a,b)=>a[0]-b[0]);const top=out.slice(0,6).map(x=>x[1]),k=top.map(e=>e.id).join('|'),bust=u=>u+(u.includes('?')?'&':'?')+'_='+Date.now();
+ if(k===el.dataset.k){el.querySelectorAll('img').forEach((im,i)=>{const n=new Image();n.onload=()=>{im.src=n.src;im.style.opacity=1};n.src=bust(top[i].img)});return}
+ el.dataset.k=k;el.innerHTML=top.length?top.map(e=>`<div data-id="${esc(e.id)}" style="cursor:pointer;margin-bottom:8px"><img src="${esc(bust(e.img))}" alt="" style="width:100%;border-radius:8px 1px 8px 1px;display:block;background:var(--panel2);min-height:60px" onerror="this.style.opacity=.2"><div class="dim" style="font-size:11px">${esc(e.id)} · ${esc((e.note||'').slice(0,40))}</div></div>`).join(''):'<p class="dim">No cameras here.</p>'}
+setInterval(wall,15000);cam.moveEnd.addEventListener(()=>setTimeout(wall,600));setTimeout(wall,5000);
+$('#wallbox').addEventListener('click',ev=>{const r=ev.target.closest('[data-id]');if(!r)return;const en=L('cam').ents.find(x=>x.id===r.dataset.id);if(en)select(en)});
+
+const AI={u:store.get('eye_aiu'),m:store.get('eye_aim'),k:store.get('eye_aik'),n:0,cache:new Map()};
+const WX={0:'clear',1:'mostly clear',2:'partly cloudy',3:'overcast',45:'fog',48:'rime fog',51:'light drizzle',53:'drizzle',55:'heavy drizzle',61:'light rain',63:'rain',65:'heavy rain',71:'light snow',73:'snow',75:'heavy snow',80:'showers',81:'showers',82:'violent showers',95:'thunderstorm',96:'thunderstorm with hail',99:'severe thunderstorm'};
+const STYPE=n=>n>=80&&n<90?'tanker':n>=70&&n<80?'cargo ship':n>=60&&n<70?'passenger vessel':n===30?'fishing vessel':[31,32,52].includes(n)?'tug':n===35?'military vessel':n===36||n===37?'pleasure craft':n>=40&&n<50?'high-speed craft':n===51?'search & rescue':n===55?'law-enforcement':'';
+const SATS=[[/STARLINK/,'Starlink'],[/ONEWEB/,'OneWeb'],[/GPS|NAVSTAR/,'GPS'],[/GLONASS/,'GLONASS'],[/GALILEO/,'Galileo'],[/BEIDOU/,'BeiDou'],[/IRIDIUM/,'Iridium'],[/^ISS|ZARYA/,'ISS'],[/TIANGONG|^CSS/,'CSS'],[/NOAA|GOES|METOP|METEOSAT|HIMAWARI|FENGYUN/,'weather sat'],[/LANDSAT|SENTINEL|TERRA|AQUA|WORLDVIEW|PLEIADES|SKYSAT|FLOCK/,'Earth-observation'],[/INTELSAT|EUTELSAT|ASTRA|TELSTAR|VIASAT|ECHOSTAR/,'commercial comm'],[/YAOGAN/,'Chinese remote-sensing'],[/^USA /,'US government'],[/COSMOS/,'Russian']];
+const nearL=(e,r)=>{const c={};for(const l of LAYERS)for(const x of l.ents)if(x!==e&&Math.abs(x.lat-e.lat)<2&&hav(e.lat,e.lon,x.lat,x.lon)<r)c[l.name]=(c[l.name]||0)+1;return Object.entries(c).map(([k,v])=>v+' '+k).join(', ')};
+async function enrich(e){const f={},g=u=>J(u).then(r=>r.json()).catch(()=>null),jobs=[];
+ if(e.layer!=='sat'){
+  jobs.push(g(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${e.lat}&longitude=${e.lon}&localityLanguage=en`).then(j=>{if(j)f.place=[j.locality||j.city,j.principalSubdivision,j.countryName].filter(Boolean).join(', ')}));
+  jobs.push(g(`https://api.open-meteo.com/v1/forecast?latitude=${e.lat}&longitude=${e.lon}&current=temperature_2m,wind_speed_10m,weather_code`).then(j=>{const c=j&&j.current;if(c)f.wx=`${WX[c.weather_code]||'code '+c.weather_code}, ${c.temperature_2m}°C, wind ${c.wind_speed_10m} km/h`}));
+  if(!['air','mil','sea'].includes(e.layer))jobs.push(g(`https://en.wikipedia.org/w/api.php?action=query&list=geosearch&gscoord=${e.lat}|${e.lon}&gsradius=10000&gslimit=3&format=json&origin=*`).then(j=>{f.wiki=j&&j.query?j.query.geosearch.map(x=>x.title):[]}))}
+ if(['air','mil'].includes(e.layer)){if(e.hex)jobs.push(g(fx('https://api.adsbdb.com/v0/aircraft/'+e.hex)).then(j=>{f.ac=j&&j.response&&j.response.aircraft}))}
+ await Promise.all(jobs);return f}
+function facts(e,f){const l=L(e.layer),o=['Layer: '+l.name,'ID: '+e.id];if(e.note)o.push('Note: '+e.note);
+ o.push(`Position: ${e.lat.toFixed(3)}, ${e.lon.toFixed(3)}`+(e.alt?`, altitude ${Math.round(e.alt)} m`:''));if(e.spd)o.push(`Speed ${Math.round(e.spd/KT)} kn, heading ${Math.round(e.hdg)}°`);
+ if(e.sources&&e.sources.length>1)o.push('Merged from: '+e.sources.join(', '));
+ if(f.place!=null)o.push('Location: '+(f.place||'open ocean / remote'));if(f.wx)o.push('Weather: '+f.wx);if(f.wiki&&f.wiki.length)o.push('Nearby: '+f.wiki.join('; '));
+ const a=f.ac;if(a)o.push(`Aircraft: ${[a.manufacturer,a.type].filter(Boolean).join(' ')}, reg ${a.registration||'?'}`);
+ if(['7500','7600','7700'].includes(e.sq))o.push('EMERGENCY SQUAWK '+e.sq);
+ if(e.layer==='sea'){const t=STYPE(e.stype);if(t)o.push('Vessel type: '+t);if(e.dest)o.push('Destination: '+e.dest);o.push(e.spd/KT<.5?'Stationary':'Under way')}
+ if(e.layer==='sat'){const k=e.alt/1e3,v=SATS.find(s=>s[0].test(e.id));o.push(`Orbit: ${k<2e3?'LEO':k<35e3?'MEO':'GEO'} at ${k.toFixed(0)} km`);if(v)o.push('Likely: '+v[1])}
+ if(e.layer==='eq')o.push('Magnitude '+e.mag);if(e.frp)o.push('FRP '+e.frp+' MW');
+ if(e.layer!=='sat'){const n=nearL(e,100);if(n)o.push('Within 100 km: '+n)}return o}
+function plain(e,f){const pl=f.place?' near '+f.place:f.place===''?' over open ocean':'',ft=Math.round(e.alt*3.281).toLocaleString(),a=f.ac;
+ if(e.layer==='air'||e.layer==='mil'){const ty=a?[a.manufacturer,a.type].filter(Boolean).join(' '):e.note;return `${e.layer==='mil'?'Military aircraft':'Aircraft'}${ty?' ('+ty+')':''}, ${e.alt<300?'ground/low':'at '+ft+' ft'} doing ${Math.round(e.spd/KT)} kn${pl}.`}
+ if(e.layer==='sea')return `${STYPE(e.stype)?'A '+STYPE(e.stype):'Vessel'}${e.note?' named '+e.note:''}, ${e.spd/KT<.5?'stationary':'moving at '+(e.spd/KT).toFixed(1)+' kn'}${pl}.`;
+ if(e.layer==='sat'){const v=SATS.find(s=>s[0].test(e.id));return `${v?'A '+v[1]:'An orbital object'} at ${(e.alt/1e3).toFixed(0)} km.`}
+ if(e.layer==='eq')return `${e.note}.`;
+ return `${L(e.layer).name}: ${e.note||e.id}${pl}.`}
+async function askLLM(q,fl,e){if(!AI.u)throw new Error('no LLM key');const sys='You are the analyst inside "Eye", a live public-data globe. Use ONLY the supplied facts. Plain English, concise.',
+ call=async()=>{const t='FACTS:\n'+fl.join('\n')+'\n\nTASK: '+q,j=await(await J(AI.u,{method:'POST',headers:{'content-type':'application/json',...(AI.k?{authorization:'Bearer '+AI.k}:{})},body:JSON.stringify({model:AI.m,temperature:.4,max_tokens:400,messages:[{role:'system',content:sys},{role:'user',content:t}]})})).json();return j.choices[0].message.content.trim()};
+ return await call()}
+async function runAI(e){const n=++AI.n,out=$('#aiout'),set=h=>{if(n===AI.n&&$('#aillm'))$('#aillm').innerHTML=h};out.innerHTML='<span class="dim">Gathering context…</span>';
+ let f=AI.cache.get(e.id);if(!f){f=await enrich(e);AI.cache.set(e.id,f)}if(n!==AI.n)return;const fl=facts(e,f);
+ out.innerHTML=`<p style="color:var(--fg)">${esc(plain(e,f))}</p><div class="dim" style="font-size:11px;margin:6px 0">${fl.slice(2).map(esc).join('<br>')}</div><div id="aillm" class="dim">AI thinking…</div>`;
+ await new Promise(r=>setTimeout(r,800));if(n!==AI.n)return;
+ askLLM('Explain what this is, what it is probably doing, and why it might matter. 4-6 sentences.',fl,e).then(t=>set('<b style="color:var(--acc)">AI ›</b> '+esc(t).replace(/\n/g,'<br>'))).catch(x=>set('AI off ('+esc(x.message)+'). Local briefing above.'))}
+function viewFacts(){const o=['Scope: current view'];if(S.hc){o.push(`Centre ${S.hc[0].toFixed(2)}, ${S.hc[1].toFixed(2)}`);const c={};for(const l of LAYERS)if(l.on)for(const x of l.ents)if(hav(S.hc[0],S.hc[1],x.lat,x.lon)<250)c[l.name]=(c[l.name]||0)+1;o.push('Within 250 km: '+(Object.entries(c).map(([k,v])=>v+' '+k).join(', ')||'nothing'))}return o}
+async function ask(){const q=$('#aiq').value.trim();if(!q)return;const e=S.sel,fl=e?facts(e,AI.cache.get(e.id)||{}):viewFacts();
+ $('#aiout').insertAdjacentHTML('beforeend',`<div class="dim" style="margin-top:8px">› ${esc(q)}</div><div class="aia">…</div>`);const a=$$('.aia').pop();$('#aiq').value='';
+ try{a.innerHTML=esc(await askLLM(q,fl,null)).replace(/\n/g,'<br>')}catch(x){a.textContent='AI unavailable: '+x.message}}
+function findArts(j){const out=[];(function w(x,d){if(!x||d>6)return;if(Array.isArray(x)){for(const o of x){if(o&&typeof o==='object'&&(o.url||o.link)&&(o.title||o.headline)){const u=safeUrl(o.url||o.link);if(u)out.push({t:String(o.title||o.headline),u,s:[o.publisher||(o.source&&(o.source.name||o.source)),o.date].filter(v=>typeof v==='string').join(' · ')})}else w(o,d+1)}}else if(typeof x==='object')for(const k in x)w(x[k],d+1)})(j,0);return out}
+async function getNews(){const e=S.sel;if(!e)return toast('Select something first');const f=AI.cache.get(e.id)||{},q=((f.place||e.note||e.id)+(['mil','conf'].includes(e.layer)?' military':'')).slice(0,100);
+ $('#aiout').insertAdjacentHTML('beforeend',`<div class="dim nws" style="margin-top:8px">News: ${esc(q)}…</div>`);const d=$$('.nws').pop();
+ try{const r=await fetch('/api/news?q='+encodeURIComponent(q)),t=await r.text();if(!r.ok)throw new Error(t.slice(0,140));const a=findArts(JSON.parse(t)).slice(0,5);
+  d.innerHTML=a.length?'<b style="color:var(--acc)">News</b>'+a.map(x=>`<div style="margin-top:4px"><a href="${esc(x.u)}" target="_blank" rel="noopener noreferrer" style="color:var(--fg)">${esc(x.t)}</a> <span class="dim">${esc(x.s)}</span></div>`).join(''):'No articles.'}
+ catch(x){d.textContent='News unavailable: '+x.message}}
+$('#aiq').addEventListener('keydown',e=>{if(e.key==='Enter')ask()});
+
+$('#aiu').value=AI.u;$('#aim').value=AI.m;$('#aik').value=AI.k;
+if(!AI.u)fetch('http://localhost:11434/api/tags',{signal:AbortSignal.timeout(1500)}).then(r=>r.json()).then(j=>{const m=j.models&&j.models[0];if(m){AI.u='http://localhost:11434/v1/chat/completions';AI.m=m.name;$('#aiu').value=AI.u;$('#aim').value=AI.m;$('#aitag').textContent='ollama';log('> Ollama ready')}}).catch(()=>{});$('#wk').value=CFG.windy;$('#gk').value=CFG.gkey;
 const restored=location.hash.length>1&&restore();
 if(!restored)cam.setView({destination:C.Cartesian3.fromDegrees(20,25,2.4e7)});
+const safe=S.base==='osm'&&store.get('eye_boot')==='1';store.set('eye_boot','1');setTimeout(()=>store.set('eye_boot','0'),25000);addEventListener('pagehide',()=>store.set('eye_boot','0'));if(safe)toast('Safe mode: last start crashed');
 setBase(S.base);renderRail();renderTools();renderSens();renderLayers();renderInspector();lucide.createIcons();if(S.sensor)setSensor(S.sensor);
 (async()=>{const b=$('#boot'),calm=matchMedia('(prefers-reduced-motion:reduce)').matches;
- for(const l of['eye_os 0.2','> cesium globe ........... ok','> binding live providers ... ok','> no simulation. real data only.','> watching.']){b.textContent+=l+'\n';await new Promise(r=>setTimeout(r,calm?0:170))}
- b.style.opacity=0;setTimeout(()=>b.remove(),500);log('eye_os 0.2',true);loadAll()})();
+ for(const l of['eye_os 0.5','> cesium ...... ok','> binding providers ...... ok','> watching.']){b.textContent+=l+'\n';await new Promise(r=>setTimeout(r,calm?0:170))}
+ b.style.opacity=0;setTimeout(()=>b.remove(),500);log('eye_os 0.5',true);await loadIcons();loadAll();if(!LAYERS.some(l=>l.on)){log('> layers off by default: switch them on in the left rail');toast('Turn on a layer from the left rail')}})();
 </script>
 </body>
 </html>
