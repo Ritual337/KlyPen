@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Eye - live globe</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;700&family=Press+Start+2P&display=swap">
+<script src="https://cdn.jsdelivr.net/npm/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/satellite.js@4.1.4/dist/satellite.min.js"></script>
+<script>/* on localhost Cesium is served same-origin by server.js (workers need that); otherwise from the CDN */
+(function(){var l=/^https?:$/.test(location.protocol)&&['localhost','127.0.0.1'].indexOf(location.hostname)>-1,b=l?'/cesium/':'https://cdn.jsdelivr.net/npm/cesium@1.120.0/Build/Cesium/';window.CESIUM_BASE_URL=b;document.write('<link rel="stylesheet" href="'+b+'Widgets/widgets.css"><script src="'+b+'Cesium.js"><\/script>')})();</script>
+<style>
+/* ===== Ritual design tokens (unchanged) ===== */
+:root{--bg:#020204;--panel:#07060b;--panel2:#0e0c15;--line:#1f1b2e;--fg:#e8e5f0;--dim:#7f7a92;--acc:#ff8a5c;--acc2:#ff5d8f;--acc3:#ffd166;--hot:#ff6b6b;--on:#06040d;color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+:root[data-theme="moss"]{--acc:#7fdc9c;--acc2:#e6d96a;--acc3:#4fd8c4}
+:root[data-theme="violet"]{--acc:#9577f5;--acc2:#45c4b3;--acc3:#d066a0}
+:root[data-theme="mist"]{--acc:#7fb4ff;--acc2:#6ee7f0;--acc3:#b69cff}
+:root[data-theme="red"]{--acc:#ff3d4f;--acc2:#d6245f;--acc3:#ff9a6b}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%;background:var(--bg)}
+body{font:13px/1.65 'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace;color:var(--fg);padding:10px;overflow:hidden}
+body.crt::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:40;background:repeating-linear-gradient(0deg,rgba(0,0,0,.22) 0 1px,transparent 1px 3px);opacity:.6}
+[hidden]{display:none!important}
+#app{height:100%;display:grid;grid-template-columns:104px minmax(0,1fr) 310px;grid-template-rows:auto minmax(0,1fr) auto;gap:10px}
+.p{background:var(--panel);border:1px solid var(--line);border-radius:22px 4px 22px 4px}
+.box{padding:14px}
+.dim{color:var(--dim)}
+.top{grid-column:1/-1;display:flex;align-items:center;gap:14px;padding:8px 18px;flex-wrap:wrap}
+.top h1{font:italic 400 34px/1 'Instrument Serif',serif}
+.top h1 small{font:400 13px 'JetBrains Mono',monospace;color:var(--dim);margin-left:12px;font-style:normal}
+.sp{margin-left:auto;display:flex;align-items:center;gap:10px;color:var(--dim);flex-wrap:wrap}
+.btn{font:inherit;color:var(--fg);background:var(--panel2);border:1px solid var(--line);border-radius:12px 2px 12px 2px;padding:8px 13px;display:inline-flex;align-items:center;gap:8px;cursor:pointer;transition:border-color .15s,color .15s,transform .15s}
+.btn svg{width:18px;height:18px;flex:none}
+.btn:hover{border-color:var(--acc);color:var(--acc);transform:translateY(-1px)}
+.btn:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.btn.on{background:linear-gradient(135deg,var(--acc),var(--acc2));border-color:var(--acc);color:var(--on)}
+.btn.on:hover{color:var(--on)}
+.btn[disabled]{opacity:.4;pointer-events:none}
+.sp .btn{padding:6px 9px}
+input.f{font:inherit;color:var(--fg);background:var(--panel2);border:1px solid var(--line);border-radius:12px 2px 12px 2px;padding:8px 12px;flex:1;min-width:0}
+input.f:focus{outline:2px solid var(--acc)}
+.tag{border:1px solid var(--line);border-radius:8px 1px 8px 1px;padding:0 8px;font-size:11px;color:var(--dim)}
+.rail{display:flex;flex-direction:column;gap:6px;padding:10px 8px;overflow:auto;overflow-x:hidden;scrollbar-gutter:stable;clip-path:inset(0 round 22px 4px 22px 4px)}
+.rail .btn{flex-direction:column;gap:3px;padding:6px 2px;font-size:10.5px;width:100%;justify-content:center;min-width:0;overflow:hidden;position:relative}
+.rail .btn i.c{position:absolute;top:5px;right:6px;width:6px;height:6px;border-radius:50%;background:var(--c,var(--acc))}
+.rail .btn:not(.on) i.c{opacity:.35}
+.rail hr{border:0;border-top:1px solid var(--acc);opacity:.25;margin:3px 12px}
+@media(min-width:961px){.rail>.btn{flex:1 0 auto;font-size:clamp(10.5px,1.35vh,13px)}.rail>.btn svg{width:clamp(18px,2.3vh,30px);height:clamp(18px,2.3vh,30px)}}
+.win{background:radial-gradient(ellipse at 15% 0%,color-mix(in srgb,var(--acc) 6%,transparent),transparent 55%),radial-gradient(ellipse at 100% 100%,color-mix(in srgb,var(--acc2) 4%,transparent),transparent 50%),var(--panel);position:relative;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.wbar{display:flex;align-items:center;gap:10px;padding:9px 18px;border-bottom:1px solid var(--line);color:var(--dim);flex-wrap:wrap}
+.wbar b{color:var(--acc);font-weight:700}
+.stage{position:relative;flex:1;min-height:320px}
+#globe{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:grab}
+#globe.nvg{filter:grayscale(1) sepia(1) hue-rotate(60deg) saturate(4) brightness(1.15)}
+#globe.flir{filter:grayscale(1) contrast(1.4) brightness(1.1)}
+#globe.mono{filter:grayscale(1) contrast(1.15)}
+.hud{position:absolute;pointer-events:none;font-size:11px;color:var(--dim);line-height:1.5}
+.hud b{color:var(--acc)}
+.hud.tl{top:12px;left:16px}.hud.tr{top:12px;right:16px;text-align:right}.hud.bl{bottom:12px;left:16px}.hud.br{bottom:12px;right:16px;text-align:right}
+.tools{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);display:flex;gap:6px;flex-wrap:wrap;justify-content:center;max-width:calc(100% - 24px)}
+.tools .btn{padding:6px 10px;font-size:11px;background:color-mix(in srgb,var(--panel) 85%,transparent);backdrop-filter:blur(8px)}
+.tools .btn.on{background:linear-gradient(135deg,var(--acc),var(--acc2))}
+.side{display:flex;flex-direction:column;gap:10px;overflow:auto;overflow-x:hidden;scrollbar-gutter:stable;min-height:0}
+.side h4{display:flex;align-items:center;gap:8px;font-weight:700;margin-bottom:10px}
+.side h4 svg{width:18px;height:18px;color:var(--acc)}
+.side h4 .tag{margin-left:auto;font-weight:400}
+.kv{display:flex;justify-content:space-between;gap:10px;padding:2px 0}.kv span:first-child{color:var(--dim)}
+.ent{font:italic 400 28px/1.1 'Instrument Serif',serif;margin-bottom:6px;word-break:break-word}
+.bar{height:6px;margin:3px 0 9px;background:repeating-linear-gradient(90deg,var(--panel2) 0 5px,transparent 5px 7px)}
+.bar i{display:block;height:100%;width:0;transition:width .6s cubic-bezier(.2,.8,.2,1);background:repeating-linear-gradient(90deg,var(--acc) 0 5px,transparent 5px 7px)}
+.row{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px dashed var(--line)}
+.row .grow{flex:1;min-width:0}.row svg{width:16px;height:16px;color:var(--c,var(--acc));flex:none}
+.row.clk{cursor:pointer}.row.clk:hover{background:var(--panel2)}
+.term{min-height:120px;max-height:200px;overflow:auto;border:1px dashed var(--line);border-radius:12px 2px 12px 2px;padding:10px;color:var(--acc);font-size:11.5px;clip-path:inset(0 round 12px 2px 12px 2px)}
+.term div{white-space:pre-wrap;word-break:break-word}.term .h{color:var(--fg);font-weight:700}
+.q{display:flex;gap:8px}
+.foot{grid-column:1/-1;display:flex;align-items:center;gap:14px;padding:5px 18px;color:var(--dim);font-size:12px;flex-wrap:wrap}
+.fb{width:6px;height:6px;border-radius:50%;background:var(--acc);flex:none;animation:fb 2.4s ease-in-out infinite}@keyframes fb{0%,100%{opacity:.1}50%{opacity:1}}
+.toast{position:fixed;left:50%;bottom:48px;transform:translateX(-50%);background:var(--acc);color:var(--on);padding:8px 16px;border-radius:12px 2px 12px 2px;z-index:90;animation:ts 2.2s forwards}
+@keyframes ts{0%{opacity:0;transform:translate(-50%,10px)}12%,85%{opacity:1;transform:translate(-50%,0)}100%{opacity:0}}
+#boot{position:fixed;inset:0;background:var(--bg);z-index:100;padding:28px;color:var(--acc);white-space:pre-wrap;transition:opacity .5s}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-track{background:repeating-linear-gradient(0deg,var(--panel2) 0 5px,transparent 5px 7px)}
+::-webkit-scrollbar-thumb{background:var(--acc);border:2px solid var(--panel);border-radius:6px 1px 6px 1px}
+@supports (-moz-appearance:none){*{scrollbar-width:thin;scrollbar-color:var(--acc) var(--panel2)}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media(min-width:961px) and (max-width:1180px){#app{grid-template-columns:92px minmax(0,1fr) 250px}}
+@media(max-width:960px){
+  body{overflow:auto}html,body{height:auto;min-height:100%}
+  #app{height:auto;grid-template-columns:minmax(0,1fr);grid-template-rows:none}
+  .win{order:1}.side{order:3;overflow:visible}.rail{order:2;flex-direction:row;overflow-x:auto;overflow-y:hidden}
+  .rail .btn{min-width:68px;flex:0 0 auto;width:auto}.rail hr{display:none}
+  .stage{min-height:62vh}
+}
+@media(max-width:720px){
+  body{padding:0 0 12px}#app{gap:8px}
+  #app .p{border-radius:0;border-left:0;border-right:0}
+  .top h1{font-size:28px}
+}
+#cesium{position:absolute;inset:0}
+#cesium .cesium-viewer-toolbar,#cesium .cesium-widget-credits .cesium-credit-logoContainer{display:none}
+#cesium .cesium-widget-credits{font-size:9px!important;opacity:.55}
+#det{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+#cesium.s-crt canvas{filter:contrast(1.15) saturate(1.25) brightness(.95)}
+#cesium.s-nvg canvas{filter:grayscale(1) sepia(1) hue-rotate(55deg) saturate(5) brightness(1.2)}
+#cesium.s-flir canvas{filter:grayscale(1) contrast(1.5) brightness(1.1) sepia(1) hue-rotate(-30deg) saturate(3)}
+#cesium.s-noir canvas{filter:grayscale(1) contrast(1.3)}
+#cesium.s-snow canvas{filter:grayscale(.85) brightness(1.5) contrast(.9)}
+.seg{display:flex;gap:6px;flex-wrap:wrap}.seg .btn{padding:5px 9px;font-size:11px}
+</style>
+</head>
+<body class="crt">
+<div id="boot"></div>
+<div id="app">
+ <header class="p top">
+  <i data-lucide="eye" style="width:30px;height:30px;color:var(--acc)"></i>
+  <h1>Eye<small id="sub">live public signals, one globe</small></h1>
+  <div class="sp">
+   <span id="clock"></span>
+   <button class="btn" data-act="theme" title="Change colour" aria-label="Colour"><i data-lucide="palette"></i></button>
+   <button class="btn on" data-act="crt" title="Scanlines" aria-label="Scanlines"><i data-lucide="tv"></i></button>
+   <button class="btn" data-act="voice" title="Voice control" aria-label="Voice"><i data-lucide="mic"></i></button>
+  </div>
+ </header>
+ <nav class="p rail" id="rail" aria-label="Layers"></nav>
+ <main class="p win">
+  <div class="wbar"><b id="path">globe/live</b><span class="dim" id="hint">drag · scroll · click a signal · keys 1-6 = sensors</span></div>
+  <div class="stage">
+   <div id="cesium"></div><canvas id="det"></canvas>
+   <div class="hud tl" id="hud-tl"></div><div class="hud tr" id="hud-tr"></div>
+   <div class="hud bl" id="hud-bl"></div><div class="hud br" id="hud-br"></div>
+   <div class="tools" id="tools"></div>
+  </div>
+ </main>
+ <aside class="side">
+  <div class="p box" id="inspector"></div>
+  <div class="p box"><h4><i data-lucide="search"></i>Find<span class="tag">Ctrl+K</span></h4>
+   <div class="q"><input class="f" id="q" placeholder="callsign, camera, or any place…" aria-label="Search"><button class="btn" data-act="find" aria-label="Go"><i data-lucide="crosshair"></i></button></div>
+   <div id="hits" style="margin-top:8px"></div></div>
+  <div class="p box"><h4><i data-lucide="map"></i>Map &amp; sensor</h4>
+   <div class="seg" id="bases"></div>
+   <div class="seg" id="sens" style="margin-top:8px"></div>
+   <div class="seg" style="margin-top:8px"><button class="btn" data-act="radar"><i data-lucide="cloud-rain"></i>Radar</button><button class="btn" data-act="g3d"><i data-lucide="box"></i>Google 3D</button></div></div>
+  <div class="p box"><h4><i data-lucide="radar"></i>Contacts<span class="tag">250 km</span></h4><div id="roster"></div></div>
+  <div class="p box"><h4><i data-lucide="key-round"></i>Keys<span class="tag">local only</span></h4>
+   <div class="q" style="margin-bottom:8px"><input class="f" id="wk" type="password" placeholder="Windy webcams key" aria-label="Windy key"><button class="btn" data-act="savewk" aria-label="Save"><i data-lucide="check"></i></button></div>
+   <div class="q"><input class="f" id="gk" type="password" placeholder="Google Maps key (Map Tiles API)" aria-label="Google key"><button class="btn" data-act="savegk" aria-label="Save"><i data-lucide="check"></i></button></div></div>
+  <div class="p box"><h4><i data-lucide="layers"></i>Layers<span class="tag" id="lc"></span></h4><div id="lstat"></div><button class="btn on" data-act="reload" style="margin-top:10px;width:100%;justify-content:center"><i data-lucide="refresh-cw"></i>Reload all</button></div>
+  <div class="p box"><h4><i data-lucide="terminal"></i>Event log</h4><div class="term" id="log"></div></div>
+ </aside>
+ <footer class="p foot"><span>All data live · no simulation</span><i class="fb"></i><span>Entities: <b id="ec">0</b></span><i class="fb"></i><span id="credit" class="dim">Esri · OSM · CARTO · NASA</span></footer>
+</div>
+
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const RAD=Math.PI/180,C=Cesium;
+const esc=t=>String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const safeUrl=u=>typeof u==='string'&&u.startsWith('https://')?u:'';
+const store={get:k=>{try{return localStorage.getItem(k)||''}catch(e){return ''}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}}};
+const CFG={windy:store.get('eye_windy')||'zRQuR5QELgVwC11t2GijCxQxl4p3751v',gkey:store.get('eye_gkey')};
+const CITIES=[['London',51.5,-0.1],['New York',40.7,-74],['Tokyo',35.7,139.7],['Sydney',-33.9,151.2],['Cairo',30,31.2],['São Paulo',-23.5,-46.6],['Mumbai',19,72.8],['Dhaka',23.8,90.4],['Lagos',6.5,3.4],['Moscow',55.7,37.6],['Los Angeles',34,-118.2],['Singapore',1.35,103.8]];
+const J=async(u,o)=>{const r=await fetch(u,{...o,signal:AbortSignal.timeout(25000)});if(!r.ok)throw new Error('HTTP '+r.status);return r};
+const mk=(id,o)=>({id,lat:0,lon:0,alt:0,hdg:0,spd:0,...o});
+const P=e=>C.Cartesian3.fromDegrees(e.lon,e.lat,e.alt||0);
+const KT=.514444,FT=.3048;
+/* =====================================================================
+   REGISTRY: LAYERS (UI + style) and LIVE (one async fetcher per layer).
+   Add a feature = add a LAYERS entry + a LIVE function returning entities.
+   ===================================================================== */
+const LAYERS=[
+ {id:'air', name:'Air',   icon:'plane',      col:'--acc',  on:true, size:5,src:'adsb.lol (12 regions)',every:60e3},
+ {id:'mil', name:'Military',icon:'shield',   col:'#ffb000',on:true, size:6,src:'adsb.lol /mil',every:60e3},
+ {id:'sea', name:'Ships', icon:'ship',       col:'--acc3', on:true, size:3,src:'Digitraffic AIS (Finland/Baltic)',every:60e3},
+ {id:'sat', name:'Sats',  icon:'satellite',  col:'--acc2', on:true, size:5,src:'CelesTrak + SGP4',every:36e5},
+ {id:'eq',  name:'Quakes',icon:'activity',   col:'--hot',  on:true, size:6,src:'USGS 24h M2.5+',every:3e5},
+ {id:'fire',name:'Fires', icon:'flame',      col:'--hot',  on:true, size:6,src:'NASA EONET',every:9e5},
+ {id:'evt', name:'Events',icon:'zap',        col:'--acc3', on:false,size:6,src:'NASA EONET (storms, volcanoes…)',every:9e5},
+ {id:'cam', name:'CCTV',  icon:'video',      col:'--acc',  on:true, size:5,src:'TfL · Caltrans · Singapore · Digitraffic · Windy',every:18e5},
+ {id:'rad', name:'Radio', icon:'radio-tower',col:'--acc2', on:false,size:4,src:'Radio Browser',every:36e5},
+ {id:'bike',name:'Bikes', icon:'bike',       col:'--acc3', on:false,size:3,src:'Citi Bike GBFS (NYC)',every:6e5},
+ {id:'lch', name:'Launch',icon:'rocket',     col:'--hot',  on:true, size:9,src:'Launch Library 2',every:36e5},
+];
+const L=id=>LAYERS.find(l=>l.id===id);
+const colOf=l=>l.col.startsWith('--')?css(l.col):l.col;
+let eonet=null;
+const getEonet=async()=>{if(!eonet)eonet=J('https://eonet.gsfc.nasa.gov/api/v3/events?status=open&limit=500').then(r=>r.json());setTimeout(()=>eonet=null,5000);return eonet};
+/* adsb.lol sends no CORS header, so in a browser it must go through server.js (npm-free, run: node server.js) */
+const LOCAL=/^https?:$/.test(location.protocol)&&['localhost','127.0.0.1'].includes(location.hostname);
+const adsbUrl=p=>LOCAL?'/api/adsb?p='+encodeURIComponent(p):'https://api.adsb.lol/v2'+p;
+const adsb=a=>a.lat!=null&&a.lon!=null&&typeof a.alt_baro==='number'?mk((a.flight||'').trim()||a.hex,{lat:a.lat,lon:a.lon,alt:a.alt_baro*FT,hdg:a.track||0,spd:(a.gs||0)*KT,note:[a.t,a.r].filter(Boolean).join(' · ')}):null;
+const LIVE={
+ air:async()=>{const m=new Map(),res=await Promise.allSettled(CITIES.map(c=>J(adsbUrl(`/point/${c[1]}/${c[2]}/150`)).then(r=>r.json())));
+  for(const r of res)if(r.status==='fulfilled')for(const a of(r.value.ac||[]).slice(0,80)){const e=adsb(a);if(e)m.set(a.hex,e)}
+  if(!m.size)throw new Error('no data');return[...m.values()]},
+ mil:async()=>{const j=await(await J(adsbUrl('/mil'))).json();return(j.ac||[]).map(adsb).filter(Boolean)},
+ sea:async()=>{const j=await(await J('https://meri.digitraffic.fi/api/ais/v1/locations')).json();
+  return j.features.filter(f=>f.geometry&&f.geometry.coordinates).map(f=>mk('MMSI '+f.properties.mmsi,{lon:f.geometry.coordinates[0],lat:f.geometry.coordinates[1],hdg:f.properties.cog<360?f.properties.cog:0,spd:(f.properties.sog<102?f.properties.sog:0)*KT}))},
+ sat:async()=>{const t=await(await J('https://celestrak.org/NORAD/elements/gp.php?GROUP=visual&FORMAT=tle')).text();
+  const a=t.trim().split(/\r?\n/),o=[];for(let i=0;i+2<a.length;i+=3){try{o.push(mk(a[i].trim(),{rec:satellite.twoline2satrec(a[i+1],a[i+2])}))}catch(e){}}return o},
+ eq:async()=>{const j=await(await J('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_day.geojson')).json();
+  return j.features.map(f=>mk(f.id,{lon:f.geometry.coordinates[0],lat:f.geometry.coordinates[1],mag:f.properties.mag,note:'M'+f.properties.mag+' · '+f.properties.place,url:safeUrl(f.properties.url)}))},
+ fire:async()=>eon('wildfires',true),evt:async()=>eon('wildfires',false),
+ cam:async()=>{const src={
+   TfL:async()=>(await(await J('https://api.tfl.gov.uk/Place/Type/JamCam')).json()).map(c=>{const p=k=>(c.additionalProperties.find(x=>x.key===k)||{}).value;return mk('TfL '+c.id,{lat:c.lat,lon:c.lon,note:c.commonName,img:safeUrl(p('imageUrl')),url:safeUrl(p('videoUrl'))})}),
+   Singapore:async()=>(await(await J('https://api.data.gov.sg/v1/transport/traffic-images')).json()).items[0].cameras.map(c=>mk('SG '+c.camera_id,{lat:c.location.latitude,lon:c.location.longitude,note:'Singapore expressway',img:safeUrl(c.image)})),
+   Caltrans:async()=>(await Promise.all([3,4,7,8,11,12].map(n=>J(`https://cwwp2.dot.ca.gov/data/d${n}/cctv/cctvStatusD${String(n).padStart(2,'0')}.json`).then(r=>r.json()).catch(()=>({data:[]}))))).flatMap(j=>j.data).map(o=>o.cctv).filter(c=>c&&c.inService==='true'&&c.imageData&&c.imageData.static&&c.imageData.static.currentImageURL).map(c=>mk('CA '+c.index+'-'+c.location.route,{lat:+c.location.latitude,lon:+c.location.longitude,note:c.location.locationName,img:safeUrl(c.imageData.static.currentImageURL)})),
+   Digitraffic:async()=>(await(await J('https://tie.digitraffic.fi/api/weathercam/v1/stations')).json()).features.filter(f=>f.properties.presets&&f.properties.presets[0]).map(f=>mk('FI '+f.properties.id,{lon:f.geometry.coordinates[0],lat:f.geometry.coordinates[1],note:f.properties.name,img:'https://weathercam.digitraffic.fi/'+f.properties.presets[0].id+'.jpg'})),
+   Windy:async()=>{if(!CFG.windy)throw new Error('no key');const r=await Promise.all(CITIES.map(c=>J(`https://api.windy.com/webcams/api/v3/webcams?nearby=${c[1]},${c[2]},100&limit=10&include=location,images,urls`,{headers:{'x-windy-api-key':CFG.windy}}).then(r=>r.json())));
+    return r.flatMap(j=>j.webcams||[]).map(w=>mk('WINDY '+w.webcamId,{lat:w.location.latitude,lon:w.location.longitude,note:w.title,img:safeUrl(w.images&&w.images.current&&w.images.current.preview),url:safeUrl(w.urls&&w.urls.detail)}))}};
+  const out=[];const res=await Promise.allSettled(Object.values(src).map(f=>f()));
+  Object.keys(src).forEach((k,i)=>{const r=res[i];if(r.status==='fulfilled'){out.push(...r.value);log('  cctv '+k+': '+r.value.length)}else log('  cctv '+k+' failed ('+r.reason.message+')')});
+  if(!out.length)throw new Error('all CCTV sources failed');return out},
+ rad:async()=>{let last;for(const h of['de1','nl1','at1']){try{const j=await(await J(`https://${h}.api.radio-browser.info/json/stations/search?has_geotag=true&limit=700&order=clickcount&reverse=true&hidebroken=true`)).json();
+   return j.filter(s=>s.geo_lat!=null&&safeUrl(s.url_resolved)).map(s=>mk('RADIO '+s.stationuuid.slice(0,6),{lat:s.geo_lat,lon:s.geo_long,note:s.name+' · '+(s.country||''),stream:s.url_resolved}))}catch(e){last=e}}throw last},
+ bike:async()=>(await(await J('https://gbfs.citibikenyc.com/gbfs/en/station_information.json')).json()).data.stations.map(s=>mk('BIKE '+s.short_name,{lat:s.lat,lon:s.lon,note:s.name+' · '+s.capacity+' docks'})),
+ lch:async()=>(await(await J('https://ll.thespacedevs.com/2.2.0/launch/upcoming/?limit=15')).json()).results.filter(r=>r.pad&&r.pad.latitude).map(r=>mk('LAUNCH '+r.name.split('|')[0].trim(),{lat:+r.pad.latitude,lon:+r.pad.longitude,note:r.name+' · '+new Date(r.net).toUTCString(),img:safeUrl(r.image)}))
+};
+async function eon(cat,isCat){const j=await getEonet();return j.events.filter(v=>(v.categories[0].id===cat)===isCat).map(v=>{const g=v.geometry[v.geometry.length-1];return g&&g.type==='Point'?mk('EONET '+v.id,{lon:g.coordinates[0],lat:g.coordinates[1],note:v.title,url:safeUrl(v.link)}):null}).filter(Boolean)}
+
+/* ---- basemaps (all free, keyless) ---- */
+const yday=new Date(Date.now()-864e5).toISOString().slice(0,10);
+const BASES={
+ sat:{name:'Satellite',url:'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',max:19,cr:'Esri, Maxar, Earthstar Geographics'},
+ osm:{name:'Streets',url:'https://tile.openstreetmap.org/{z}/{x}/{y}.png',max:19,cr:'© OpenStreetMap contributors'},
+ dark:{name:'Dark',url:'https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',max:19,cr:'© CARTO © OpenStreetMap'},
+ gibs:{name:'NASA daily',url:`https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_SNPP_CorrectedReflectance_TrueColor/default/${yday}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg`,max:9,cr:'NASA GIBS / VIIRS'},
+};
+const SENSORS=['normal','crt','nvg','flir','noir','snow'];
+const S={sel:null,mode:'orbit',range:30000,fh:0,sensor:0,detect:true,base:'sat',radar:false,radarLayer:null,ctx:null,tour:null,g3d:null,want:null,hc:null};
+
+/* ---- viewer ---- */
+C.Ion.defaultAccessToken='';
+const viewer=new C.Viewer('cesium',{baseLayer:false,baseLayerPicker:false,geocoder:false,homeButton:false,sceneModePicker:false,navigationHelpButton:false,animation:false,timeline:false,fullscreenButton:false,infoBox:false,selectionIndicator:false});
+const sc=viewer.scene,cam=viewer.camera;
+sc.backgroundColor=C.Color.BLACK;sc.globe.baseColor=C.Color.fromCssColorString('#07060b');sc.highDynamicRange=false;
+sc.screenSpaceCameraController.minimumZoomDistance=30;
+LAYERS.forEach(l=>{l.coll=sc.primitives.add(new C.PointPrimitiveCollection());l.coll.show=l.on;l.ents=[];l.status='…'});
+function setBase(k){S.base=k;const b=BASES[k],il=viewer.imageryLayers;il.removeAll();
+ il.addImageryProvider(new C.UrlTemplateImageryProvider({url:b.url,maximumLevel:b.max,credit:b.cr}));
+ S.radarLayer=null;if(S.radar)addRadar();renderBase()}
+async function addRadar(){try{const j=await(await J('https://api.rainviewer.com/public/weather-maps.json')).json(),f=j.radar.past[j.radar.past.length-1];
+ S.radarLayer=viewer.imageryLayers.addImageryProvider(new C.UrlTemplateImageryProvider({url:j.host+f.path+'/256/{z}/{x}/{y}/2/1_1.png',maximumLevel:7,credit:'RainViewer'}));S.radarLayer.alpha=.65}catch(e){log('> radar failed ('+e.message+')')}}
+async function toggleG3d(){if(S.g3d){sc.primitives.remove(S.g3d);S.g3d=null;sc.globe.show=true;renderBase();return}
+ if(!CFG.gkey)return toast('Add a Google Maps key (Map Tiles API) first');
+ try{S.g3d=await C.Cesium3DTileset.fromUrl('https://tile.googleapis.com/v1/3dtiles/root.json?key='+encodeURIComponent(CFG.gkey));sc.primitives.add(S.g3d);sc.globe.show=false;viewer.scene.light=new C.DirectionalLight({direction:new C.Cartesian3(0,0,-1)});log('> Google photorealistic 3D tiles on')}catch(e){S.g3d=null;log('> Google 3D failed ('+e.message+')');toast('Google 3D failed: check key')}renderBase()}
+
+/* ---- data ---- */
+function setEnts(l,arr){l.coll.removeAll();l.ents=arr;const c=C.Color.fromCssColorString(colOf(l)).withAlpha(.92);
+ for(const e of arr){e.layer=l.id;e.prim=l.coll.add({position:P(e),pixelSize:l.id==='eq'?4+(e.mag||0)*1.6:l.size,color:c,outlineColor:C.Color.BLACK.withAlpha(.6),outlineWidth:1,id:e,disableDepthTestDistance:5e5})}
+ if(S.sel&&S.sel.layer===l.id){const n=arr.find(x=>x.id===S.sel.id);S.sel=n||null;if(!n)setMode('orbit');renderInspector()}
+ if(S.want){const w=arr.find(x=>x.id===S.want);if(w){S.want=null;select(w);setMode('follow')}}}
+function recolor(){for(const l of LAYERS){const c=C.Color.fromCssColorString(colOf(l)).withAlpha(.92);for(const e of l.ents)e.prim.color=c}}
+async function loadLayer(l){try{const arr=await LIVE[l.id]();if(!arr.length)throw new Error('empty');setEnts(l,arr);l.status='live';log('> '+l.id+': '+arr.length+' live')}catch(e){l.status='error';log('> '+l.id+' failed ('+e.message+')')}renderLayers()}
+async function loadAll(){for(const l of LAYERS)loadLayer(l)}
+function tickMove(dt){for(const id of['air','mil','sea']){const l=L(id);if(!l.on)continue;for(const e of l.ents){if(!e.spd)continue;const d=e.spd*dt,h=e.hdg*RAD;e.lat+=Math.cos(h)*d/111320;e.lon+=Math.sin(h)*d/(111320*Math.max(.1,Math.cos(e.lat*RAD)));e.prim.position=P(e)}}}
+function tickSat(){const l=L('sat');if(!l.on)return;const d=new Date(),g=satellite.gstime(d);for(const e of l.ents){if(!e.rec)continue;const pv=satellite.propagate(e.rec,d);if(!pv.position)continue;const gd=satellite.eciToGeodetic(pv.position,g);e.lat=satellite.degreesLat(gd.latitude);e.lon=satellite.degreesLong(gd.longitude);e.alt=gd.height*1000;e.prim.position=P(e)}}
+let lt=performance.now();setInterval(()=>{const n=performance.now();tickMove((n-lt)/1000);lt=n},250);setInterval(tickSat,1000);
+LAYERS.forEach(l=>setInterval(()=>{if(!document.hidden)loadLayer(l)},l.every));
+
+/* ---- camera modes ---- */
+sc.preRender.addEventListener(()=>{const e=S.sel;if(!e)return;
+ if(S.mode==='follow')cam.lookAt(P(e),new C.HeadingPitchRange(S.fh,-.6,S.range));
+ else if(S.mode==='cockpit')cam.setView({destination:C.Cartesian3.fromDegrees(e.lon,e.lat,e.alt+40),orientation:{heading:e.hdg*RAD,pitch:-.04,roll:0}})});
+function setMode(m){if(m!=='orbit'&&!S.sel)return toast('Select a signal first');
+ if(m==='cockpit'&&!['air','mil'].includes(S.sel.layer))return toast('Cockpit works on aircraft');
+ const was=S.mode;S.mode=m;sc.screenSpaceCameraController.enableInputs=m==='orbit';
+ if(m==='follow'){S.fh=cam.heading;S.range=({sat:6e6,air:3e4,mil:3e4}[S.sel.layer])||15e4}
+ if(m==='orbit'){cam.lookAtTransform(C.Matrix4.IDENTITY);if(was==='cockpit'&&S.sel)cam.flyTo({destination:C.Cartesian3.fromDegrees(S.sel.lon,S.sel.lat,S.sel.alt+2e5),orientation:{heading:0,pitch:-C.Math.PI_OVER_TWO},duration:1.5})}
+ renderTools();renderInspector()}
+$('#cesium').addEventListener('wheel',e=>{if(S.mode==='follow'){S.range=Math.max(500,S.range*(e.deltaY>0?1.12:.89))}},{passive:true});
+function flyTo(lon,lat,h=8e5){setMode('orbit');cam.flyTo({destination:C.Cartesian3.fromDegrees(lon,lat,h),duration:2})}
+function globeView(){setMode('orbit');cam.flyTo({destination:C.Cartesian3.fromDegrees(20,25,2.4e7),duration:2})}
+function select(e){S.sel=e;if(!e)setMode('orbit');renderInspector();renderTools();if(e)log('> lock '+e.id)}
+new C.ScreenSpaceEventHandler(viewer.canvas).setInputAction(m=>{const p=sc.pick(m.position);select(p&&p.id&&p.id.layer?p.id:null)},C.ScreenSpaceEventType.LEFT_CLICK);
+
+/* ---- tools ---- */
+const TOOLS=[
+ {id:'detect',icon:'scan',label:'Detect',get:()=>S.detect,run:()=>S.detect=!S.detect},
+ {id:'sensor',icon:'eye',label:'Sensor',get:()=>S.sensor>0,run:()=>setSensor((S.sensor+1)%SENSORS.length)},
+ {id:'follow',icon:'locate-fixed',label:'Follow',get:()=>S.mode==='follow',run:()=>setMode(S.mode==='follow'?'orbit':'follow')},
+ {id:'cockpit',icon:'plane-takeoff',label:'Cockpit',get:()=>S.mode==='cockpit',run:()=>setMode(S.mode==='cockpit'?'orbit':'cockpit')},
+ {id:'ctx',icon:'globe',label:'Context',get:()=>!!S.ctx,run:ctxToggle},
+ {id:'tour',icon:'clapperboard',label:'Tour',get:()=>!!S.tour,run:tour},
+ {id:'share',icon:'link',label:'Share',get:()=>false,run:share},
+ {id:'reset',icon:'rotate-ccw',label:'Globe',get:()=>false,run:globeView},
+];
+function setSensor(i){S.sensor=i;$('#cesium').className=i?'s-'+SENSORS[i]:'';renderSens();hud();toast('Sensor: '+SENSORS[i])}
+function setOn(l,v){l.on=v;l.coll.show=v;renderRail();renderLayers()}
+function ctxToggle(){if(S.ctx){LAYERS.forEach(l=>setOn(l,S.ctx.on.includes(l.id)));cam.setView(S.ctx.cam);S.ctx=null;log('> context restored')}
+ else{S.ctx={on:LAYERS.filter(l=>l.on).map(l=>l.id),cam:{destination:cam.positionWC.clone(),orientation:{heading:cam.heading,pitch:cam.pitch,roll:cam.roll}}};LAYERS.forEach(l=>setOn(l,true));globeView();log('> global context: all layers')}}
+function tour(){if(S.tour){clearInterval(S.tour);S.tour=null;renderTools();return}let i=0;const go=()=>{const c=CITIES[i++%CITIES.length];flyTo(c[2],c[1],4e5);log('> tour: '+c[0])};go();S.tour=setInterval(go,8000);renderTools()}
+function share(){const c=C.Cartographic.fromCartesian(cam.positionWC),st={b:S.base,s:S.sensor,l:LAYERS.filter(l=>l.on).map(l=>l.id),c:[+(c.longitude/RAD).toFixed(4),+(c.latitude/RAD).toFixed(4),Math.round(c.height),+(cam.heading/RAD).toFixed(1),+(cam.pitch/RAD).toFixed(1)],t:S.sel&&S.sel.id,m:S.mode};
+ const u=location.href.split('#')[0]+'#'+btoa(unescape(encodeURIComponent(JSON.stringify(st))));navigator.clipboard&&navigator.clipboard.writeText(u).then(()=>toast('Share link copied')).catch(()=>toast('Copy failed'));location.hash=u.split('#')[1]}
+function restore(){try{const st=JSON.parse(decodeURIComponent(escape(atob(location.hash.slice(1)))));
+ if(st.b&&BASES[st.b])S.base=st.b;LAYERS.forEach(l=>{l.on=st.l.includes(l.id);l.coll.show=l.on});if(st.s)S.sensor=st.s;
+ if(st.c)cam.setView({destination:C.Cartesian3.fromDegrees(st.c[0],st.c[1],st.c[2]),orientation:{heading:st.c[3]*RAD,pitch:st.c[4]*RAD,roll:0}});S.want=st.t||null;return true}catch(e){return false}}
+
+/* ---- search / voice ---- */
+async function geocode(q){const j=await(await J('https://nominatim.openstreetmap.org/search?format=json&limit=1&q='+encodeURIComponent(q))).json();if(!j[0])throw new Error('not found');return j[0]}
+async function find(){const q=$('#q').value.trim(),ql=q.toLowerCase();if(!q){$('#hits').innerHTML='';return}
+ const hits=LAYERS.flatMap(l=>l.ents).filter(e=>(e.id+' '+(e.note||'')).toLowerCase().includes(ql)).slice(0,6);
+ $('#hits').innerHTML=hits.map(e=>`<div class="row clk" data-id="${esc(e.id)}" style="--c:${esc(colOf(L(e.layer)))}"><i data-lucide="${L(e.layer).icon}"></i><span class="grow">${esc(e.id)}</span></div>`).join('')+`<div class="row clk" data-place="1"><i data-lucide="map-pin"></i><span class="grow">Go to “${esc(q)}”</span></div>`;lucide.createIcons()}
+$('#hits').addEventListener('click',async e=>{const r=e.target.closest('.row');if(!r)return;
+ if(r.dataset.place){try{const p=await geocode($('#q').value);flyTo(+p.lon,+p.lat,6e4)}catch(x){toast('Place not found')}}
+ else{const en=LAYERS.flatMap(l=>l.ents).find(x=>x.id===r.dataset.id);if(en){const l=L(en.layer);if(!l.on)setOn(l,true);select(en);flyTo(en.lon,en.lat,3e5)}}});
+$('#q').addEventListener('input',find);$('#q').addEventListener('keydown',e=>{if(e.key==='Enter')find()});
+function voice(){const R=window.SpeechRecognition||window.webkitSpeechRecognition;if(!R)return toast('Voice not supported in this browser');const r=new R();r.lang='en-US';r.onresult=ev=>command(ev.results[0][0].transcript);r.onerror=()=>toast('Voice error');r.start();toast('Listening…')}
+async function command(t){t=t.toLowerCase();log('> voice: '+t);
+ const sm={'night vision':2,nvg:2,thermal:3,flir:3,crt:1,noir:4,snow:5,normal:0};for(const k in sm)if(t.includes(k))return setSensor(sm[k]);
+ if(/globe|zoom out/.test(t))return globeView();if(t.includes('cockpit'))return setMode('cockpit');if(t.includes('follow'))return setMode('follow');
+ const lm=t.match(/(show|hide)\s+(.+)/);if(lm){const l=LAYERS.find(l=>lm[2].includes(l.name.toLowerCase()));if(l)return setOn(l,lm[1]==='show')}
+ const m=t.match(/(?:fly to|go to|zoom to|show me)\s+(.+)/);try{const p=await geocode(m?m[1]:t);flyTo(+p.lon,+p.lat,6e4)}catch(e){toast('Not understood')}}
+
+/* ---- render UI ---- */
+function log(t,h){const d=document.createElement('div');if(h)d.className='h';d.textContent=t;const l=$('#log');if(!l)return;l.append(d);l.scrollTop=1e9;while(l.children.length>80)l.firstChild.remove()}
+function toast(t){const d=document.createElement('div');d.className='toast';d.textContent=t;document.body.append(d);setTimeout(()=>d.remove(),2300)}
+function renderRail(){$('#rail').innerHTML=LAYERS.map(l=>`<button class="btn ${l.on?'on':''}" data-layer="${l.id}" style="--c:${colOf(l)}" title="${esc(l.src)}"><i class="c"></i><i data-lucide="${l.icon}"></i>${l.name}</button>`).join('');lucide.createIcons()}
+function renderTools(){$('#tools').innerHTML=TOOLS.map(t=>`<button class="btn ${t.get()?'on':''}" data-tool="${t.id}"><i data-lucide="${t.icon}"></i>${t.label}</button>`).join('');lucide.createIcons()}
+function renderBase(){$('#bases').innerHTML=Object.entries(BASES).map(([k,b])=>`<button class="btn ${S.base===k&&!S.g3d?'on':''}" data-base="${k}">${b.name}</button>`).join('');
+ $$('[data-act=radar]').forEach(b=>b.classList.toggle('on',S.radar));$$('[data-act=g3d]').forEach(b=>b.classList.toggle('on',!!S.g3d))}
+function renderSens(){$('#sens').innerHTML=SENSORS.map((s,i)=>`<button class="btn ${S.sensor===i?'on':''}" data-sens="${i}">${i+1} ${s}</button>`).join('')}
+function renderLayers(){$('#lc').textContent=LAYERS.filter(l=>l.on).length+'/'+LAYERS.length;$('#ec').textContent=LAYERS.reduce((a,l)=>a+l.ents.length,0);
+ $('#lstat').innerHTML=LAYERS.map(l=>`<div class="row" style="--c:${colOf(l)}" title="${esc(l.src)}"><i data-lucide="${l.icon}"></i><span class="grow">${l.name}<span class="tag" style="margin-left:6px;${l.status==='live'?'color:var(--acc);border-color:var(--acc)':l.status==='error'?'color:var(--hot);border-color:var(--hot)':''}">${l.status}</span></span><span class="dim">${l.ents.length}</span></div>`).join('');lucide.createIcons()}
+const audio=new Audio();let camTimer=0;
+function renderInspector(){const e=S.sel,el=$('#inspector');clearInterval(camTimer);
+ if(!e){el.innerHTML='<h4><i data-lucide="mouse-pointer-click"></i>Inspector</h4><p class="dim">Nothing selected. Click a signal on the globe, or search.</p>';lucide.createIcons();return}
+ const l=L(e.layer),alt=e.alt>1e4?(e.alt/1e3).toFixed(0)+' km':Math.round(e.alt)+' m';
+ el.innerHTML=`<h4><i data-lucide="${l.icon}"></i>${l.name}<span class="tag">${S.mode}</span></h4><div class="ent">${esc(e.id)}</div>${e.note?`<p class="dim" style="margin-bottom:6px">${esc(e.note)}</p>`:''}
+ ${e.img?`<img id="ci" src="${esc(e.img)}" alt="" style="width:100%;border-radius:12px 2px 12px 2px;margin:4px 0 8px;display:block" onerror="this.style.display='none'">`:''}
+ <div class="kv"><span>lat</span><span id="i-la"></span></div><div class="kv"><span>lon</span><span id="i-lo"></span></div>
+ ${e.layer!=='eq'&&e.alt?`<div class="kv"><span>altitude</span><span>${alt}</span></div>`:''}${e.spd?`<div class="kv"><span>speed</span><span>${Math.round(e.spd/KT)} kn</span></div><div class="kv"><span>heading</span><span>${Math.round(e.hdg)}°</span></div>`:''}
+ <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button class="btn on" data-act="flyto">Fly to</button><button class="btn" data-tool="follow">Follow</button>${['air','mil'].includes(e.layer)?'<button class="btn" data-tool="cockpit">Cockpit</button>':''}
+ ${e.stream?'<button class="btn" data-act="play"><i data-lucide="play"></i>Listen</button>':''}${e.url?`<a class="btn" href="${esc(e.url)}" target="_blank" rel="noopener noreferrer" style="text-decoration:none">Source</a>`:''}</div>`;
+ lucide.createIcons();if(e.img)camTimer=setInterval(()=>{const i=$('#ci');if(i)i.src=e.img+(e.img.includes('?')?'&':'?')+'_='+Date.now()},20000)}
+function liveInspector(){const e=S.sel;if(!e)return;const a=$('#i-la'),o=$('#i-lo');if(a)a.textContent=e.lat.toFixed(4);if(o)o.textContent=e.lon.toFixed(4)}
+
+/* ---- HUD, detection overlay, contacts ---- */
+const hav=(a,b,c,d)=>{const x=(c-a)*RAD,y=(d-b)*RAD,h=Math.sin(x/2)**2+Math.cos(a*RAD)*Math.cos(c*RAD)*Math.sin(y/2)**2;return 12742*Math.asin(Math.sqrt(h))};
+function hud(){const cv=viewer.canvas,cc=new C.Cartesian2(cv.clientWidth/2,cv.clientHeight/2),p=cam.pickEllipsoid(cc,sc.globe.ellipsoid),car=C.Cartographic.fromCartesian(p||cam.positionWC);
+ const la=car.latitude/RAD,lo=car.longitude/RAD,h=C.Cartographic.fromCartesian(cam.positionWC).height;S.hc=[la,lo];
+ $('#hud-tl').innerHTML=`<b>SENSOR</b> ${SENSORS[S.sensor].toUpperCase()}<br><b>MODE</b> ${S.mode.toUpperCase()}`;
+ $('#hud-tr').innerHTML=`<b>LAT</b> ${la.toFixed(2)}°<br><b>LON</b> ${lo.toFixed(2)}°`;
+ $('#hud-bl').innerHTML=`<b>ALT</b> ${(h/1000).toFixed(h>1e5?0:1)} km<br><b>HDG</b> ${(cam.heading/RAD).toFixed(0)}°`;
+ $('#hud-br').innerHTML=`<b>UTC</b> ${new Date().toISOString().slice(11,19)}<br><b>BASE</b> ${S.g3d?'GOOGLE 3D':BASES[S.base].name.toUpperCase()}`;$('#clock').textContent=new Date().toISOString().slice(0,10);liveInspector()}
+function drawDet(){const c=$('#det'),w=c.clientWidth,h=c.clientHeight;if(c.width!==w||c.height!==h){c.width=w;c.height=h}const g=c.getContext('2d');g.clearRect(0,0,w,h);
+ const occ=new C.EllipsoidalOccluder(C.Ellipsoid.WGS84,cam.positionWC),hgt=C.Cartographic.fromCartesian(cam.positionWC).height,vis=[];
+ const near=(x,y)=>x>0&&y>0&&x<w&&y<h;
+ if(S.detect)for(const l of LAYERS){if(!l.on||(['sea','bike','rad'].includes(l.id)&&hgt>2e6))continue;for(const e of l.ents){const p=P(e);if(!occ.isPointVisible(p))continue;const s=sc.cartesianToCanvasCoordinates(p);if(s&&near(s.x,s.y))vis.push([Math.hypot(s.x-w/2,s.y-h/2),s.x,s.y,e,l])}}
+ vis.sort((a,b)=>a[0]-b[0]);g.font="10px 'JetBrains Mono',monospace";g.lineWidth=1;
+ for(const[,x,y,e,l]of vis.slice(0,30)){const col=colOf(l),s=9;g.strokeStyle=col;g.fillStyle=col;g.globalAlpha=.85;g.beginPath();[[-1,-1],[1,-1],[1,1],[-1,1]].forEach(([a,b])=>{g.moveTo(x+a*s,y+b*s*.4);g.lineTo(x+a*s,y+b*s);g.lineTo(x+a*s*.4,y+b*s)});g.stroke();g.fillText(e.id.slice(0,18),x+s+3,y-s+2);g.globalAlpha=1}
+ if(S.sel&&S.mode==='orbit'){const p=P(S.sel);if(occ.isPointVisible(p)){const s=sc.cartesianToCanvasCoordinates(p);if(s){g.strokeStyle=css('--fg');g.lineWidth=1.5;g.beginPath();g.arc(s.x,s.y,14,0,6.2832);g.stroke()}}}}
+setInterval(drawDet,150);setInterval(hud,400);
+function roster(){if(!S.hc)return;const out=[];for(const l of LAYERS){if(!l.on||['sea','bike','rad'].includes(l.id))continue;for(const e of l.ents){const d=hav(S.hc[0],S.hc[1],e.lat,e.lon);if(d<250)out.push([d,e,l])}}
+ out.sort((a,b)=>a[0]-b[0]);$('#roster').innerHTML=out.slice(0,8).map(([d,e,l])=>`<div class="row clk" data-id="${esc(e.id)}" style="--c:${colOf(l)}"><i data-lucide="${l.icon}"></i><span class="grow">${esc(e.id.slice(0,22))}</span><span class="dim">${d.toFixed(0)} km</span></div>`).join('')||'<p class="dim">No contacts within 250 km of view centre.</p>';lucide.createIcons()}
+setInterval(roster,2500);
+$('#roster').addEventListener('click',e=>{const r=e.target.closest('.row');if(!r)return;const en=LAYERS.flatMap(l=>l.ents).find(x=>x.id===r.dataset.id);if(en)select(en)});
+
+/* ---- events ---- */
+document.addEventListener('click',e=>{
+ const lb=e.target.closest('[data-layer]');if(lb){const l=L(lb.dataset.layer);setOn(l,!l.on);log('> layer '+l.id+(l.on?' on':' off'));return}
+ const tb=e.target.closest('[data-tool]');if(tb){TOOLS.find(t=>t.id===tb.dataset.tool).run();renderTools();return}
+ const bb=e.target.closest('[data-base]');if(bb){if(S.g3d)toggleG3d();setBase(bb.dataset.base);return}
+ const sb=e.target.closest('[data-sens]');if(sb){setSensor(+sb.dataset.sens);return}
+ const a=e.target.closest('[data-act]');if(!a)return;const k=a.dataset.act;
+ if(k==='theme'){const T=['','moss','violet','mist','red'],i=(T.indexOf(document.documentElement.dataset.theme||'')+1)%T.length;T[i]?document.documentElement.dataset.theme=T[i]:delete document.documentElement.dataset.theme;recolor();renderRail();renderLayers()}
+ if(k==='crt'){document.body.classList.toggle('crt');a.classList.toggle('on')}
+ if(k==='voice')voice();if(k==='find')find();if(k==='reload'){log('> reloading all layers');loadAll()}
+ if(k==='radar'){S.radar=!S.radar;if(S.radar)addRadar();else if(S.radarLayer){viewer.imageryLayers.remove(S.radarLayer);S.radarLayer=null}renderBase()}
+ if(k==='g3d')toggleG3d();
+ if(k==='savewk'){CFG.windy=$('#wk').value.trim();store.set('eye_windy',CFG.windy);toast('Key saved');loadLayer(L('cam'))}
+ if(k==='savegk'){CFG.gkey=$('#gk').value.trim();store.set('eye_gkey',CFG.gkey);toast('Key saved')}
+ if(k==='flyto'&&S.sel)flyTo(S.sel.lon,S.sel.lat,S.sel.layer==='sat'?6e6:S.sel.layer==='air'||S.sel.layer==='mil'?4e4:1.5e5);
+ if(k==='play'&&S.sel&&S.sel.stream){if(!audio.paused&&audio.src===S.sel.stream){audio.pause();toast('Stopped')}else{audio.src=S.sel.stream;audio.play().then(()=>toast('Playing')).catch(()=>toast('Stream blocked'))}}});
+addEventListener('keydown',e=>{const t=e.target.tagName;if((e.metaKey||e.ctrlKey)&&e.key==='k'){e.preventDefault();$('#q').focus();return}
+ if(e.key==='Escape'){if(S.ctx)ctxToggle();select(null);return}
+ if(t==='INPUT')return;if(/^[1-6]$/.test(e.key))setSensor(+e.key-1)});
+
+/* ---- boot ---- */
+$('#wk').value=CFG.windy;$('#gk').value=CFG.gkey;
+const restored=location.hash.length>1&&restore();
+if(!restored)cam.setView({destination:C.Cartesian3.fromDegrees(20,25,2.4e7)});
+setBase(S.base);renderRail();renderTools();renderSens();renderLayers();renderInspector();lucide.createIcons();if(S.sensor)setSensor(S.sensor);
+(async()=>{const b=$('#boot'),calm=matchMedia('(prefers-reduced-motion:reduce)').matches;
+ for(const l of['eye_os 0.2','> cesium globe ........... ok','> binding live providers ... ok','> no simulation. real data only.','> watching.']){b.textContent+=l+'\n';await new Promise(r=>setTimeout(r,calm?0:170))}
+ b.style.opacity=0;setTimeout(()=>b.remove(),500);log('eye_os 0.2',true);loadAll()})();
+</script>
+</body>
+</html>
